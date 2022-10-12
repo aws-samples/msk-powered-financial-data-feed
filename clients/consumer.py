@@ -12,9 +12,9 @@ consumer = KafkaConsumer(
     # For mTLS auth:
     security_protocol='SSL',
     ssl_check_hostname=True,
-    ssl_certfile='kafkacert/client_cert.pem',
-    ssl_keyfile='kafkacert/private_key.pem',
-    ssl_cafile='kafkacert/truststore.pem',
+    ssl_certfile='client_cert.pem',
+    ssl_keyfile='private_key.pem',
+    ssl_cafile='truststore.pem',
 )
 
 # Loop to consume messages and Print details.
