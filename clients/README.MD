@@ -3,8 +3,10 @@
 In this folder you will find some examples of Kafka clients to use.
 
 Before you start:
-1. install requirements.txt
+1. Install requirements.txt
+   
     `python3 -m pip install -r requirements.txt`
+
 2. Create the private key file named `private_key.pem`.
 3. Create the certificate file named `client_cert.pem`.
 4. Create the public trust store with Amazon Public CA certificate file named `truststore.pem`. 
