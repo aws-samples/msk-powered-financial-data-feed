@@ -38,22 +38,22 @@ def run_connection(stream):
 
 #Post messages into Kafka Topics
 async def post_bars(b):
-    #print('trade', b)
+    print('trade', b)
     producer.send('trade', value=str(b))
     producer.flush()
 
 async def post_trade(t):
-    #print('trade', t)
+    print('trade', t)
     producer.send('trade', value=str(t))
     producer.flush()
 
 async def post_quote(q):
-    #print('quote', q)
+    print('quote', q)
     producer.send('quote', value=str(q))
     producer.flush()
 
 async def post_crypto_trade(t):
-    #print('crypto trade', t)
+    print('crypto trade', t)
     producer.send('crypto_trade', value=str(t))
     producer.flush()
 

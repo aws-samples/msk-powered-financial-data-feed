@@ -14,6 +14,11 @@ Before you start:
 4. Create the public trust store with Amazon Public CA certificate file named `truststore.pem`. 
 5. Create an environment variable called **TLSBROKERS** that contains the bootstrap servers DNS names.
 
+    ```
+    export TLSBROKERS="x.y.z.kafka.<region-name>.amazonaws.com,x.y.z.kafka.<region-name>.amazonaws.com,x.y.z.kafka.<region-name>.amazonaws.com"
+    ```
+
+
 ### Example 1 - producer.py
 
 **producer.py** is an example of a Kafka producer that uses mTLS to authenticate against the MSK cluster. There are a few steps that you need to perform to make it work correctly.
