@@ -7,6 +7,7 @@ This application demonstrates how to publish a real-time financial data feed as 
 ## Contributors
 
 [Diego Soares](https://www.linkedin.com/in/diegogsoares/)
+
 [Rana Dutt](https://www.linkedin.com/in/ranadutt/)
 
 ## Security
