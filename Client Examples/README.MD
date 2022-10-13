@@ -9,21 +9,8 @@ Before you start:
     python3 -m pip install -r requirements.txt
     ```
 
-2. Create the private key file named `private_key.pem`.
-
-    ```
-    python3 -m pip install -r requirements.txt
-    ```
-
-3. Create a Certificate Signing Request (CSR)
-
-    ```
-    python3 -m pip install -r requirements.txt
-    ```
-
-4. Create the certificate file named `client_cert.pem`.
-5. Create the public trust store with Amazon Public CA certificate file named `truststore.pem`. 
-6. Create an environment variable called **TLSBROKERS** that contains the bootstrap servers DNS names.
+2. Follow the instructions on setting up TLS for your clients in [this document](../Best%20Practices/SetupTLS.md) 
+3. Create an environment variable called **TLSBROKERS** that contains the bootstrap servers DNS names.
 
     ```
     export TLSBROKERS="x.y.z.kafka.<region-name>.amazonaws.com,x.y.z.kafka.<region-name>.amazonaws.com,x.y.z.kafka.<region-name>.amazonaws.com"
