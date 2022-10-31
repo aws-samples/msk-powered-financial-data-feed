@@ -1,0 +1,18 @@
+#!/bin/bash
+# makecsr - Make a CSR (Certificate Signing Request)
+#
+cacerts_file=`find /usr/lib/jvm -name cacerts -print`
+keystore_file=kafka.client.keystore.jks
+truststore_file=kafka.client.truststore.jks
+
+if [ -z "cacerts_file" ]
+then
+        echo "Java is not installed. To install Java: $ yum -y install java-1.8.0"
+        exit 1
+fi
+cp $cacerts_file $truststore_file
+keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12
+keytool -keystore $keystore_file -certreq -file raw-client-cert.csr -alias kafka-key
+sed 's/NEW //' raw-client-cert.csr > client-cert.csr
+rm -f raw-client-cert.csr
+
