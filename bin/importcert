@@ -1,0 +1,32 @@
+#!/bin/bash
+# 
+# importcert - Import a signed certifcate to the keystore, given a PEM file containing the cert and chain cert.
+#
+# Usage: importcert client-cert.pem
+#
+#
+if [ "$#" != 1 ]; then
+        echo "Usage: importcert client.cert.pem"
+        exit 1
+fi
+
+pem_file=$1
+if [ ! -f "$pem_file" ]; then
+    echo "$pem_file does not exist."
+    exit 1
+fi
+
+read -s -p "Enter your keystore password: " keypass
+echo -e "\nImporting cdertificate..."
+keytool -keystore kafka.client.keystore.jks -import -file $pem_file -alias kafka-key -storepass $keypass -keypass $keypass
+if [ ! $? -eq 0 ]; then
+        echo "Failed to import certificate"
+        exit 1
+fi
+# Create the client.properties file
+echo "security.protocol=SSL" > client.properties
+echo "ssl.truststore.location=/home/ec2-user/kafka/kafka.client.truststore.jks" >> client.properties
+echo "ssl.keystore.location=/home/ec2-user/kafka/kafka.client.keystore.jks" >> client.properties
+echo "ssl.keystore.password=$keypass" >> client.properties
+echo "ssl.key.password=$keypass" >> client.properties
+
