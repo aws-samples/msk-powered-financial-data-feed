@@ -1,0 +1,27 @@
+{
+  "vpc-provider:account=613322082827:filter.tag:Name=DataFeedUsingMskStack/my-msk-vpc:region=us-east-1:returnAsymmetricSubnets=true": {
+    "vpcId": "vpc-09f644e23d7be3cd6",
+    "vpcCidrBlock": "10.0.0.0/16",
+    "availabilityZones": [],
+    "subnetGroups": [
+      {
+        "name": "public",
+        "type": "Public",
+        "subnets": [
+          {
+            "subnetId": "subnet-0bf842e6bb9995d16",
+            "cidr": "10.0.0.0/24",
+            "availabilityZone": "us-east-1a",
+            "routeTableId": "rtb-03044cd5e68a8e633"
+          },
+          {
+            "subnetId": "subnet-0a9bf8993823dc2cb",
+            "cidr": "10.0.1.0/24",
+            "availabilityZone": "us-east-1b",
+            "routeTableId": "rtb-0cbf810391732175f"
+          }
+        ]
+      }
+    ]
+  }
+}
