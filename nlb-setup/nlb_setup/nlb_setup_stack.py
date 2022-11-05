@@ -42,12 +42,32 @@ class NlbSetupStack(Stack):
                 # print("Broker: ", name, "IP: ", ip)
         
 
+        # Get the list of Zookeeper nodes from the env variable
+        zk_node_string = os.environ["ZKNODES"]
+
+        zk_nodes = zk_node_string.split(',')
+        zk_node_names = []
+
+        for url in zk_nodes:
+            name = url.split(':')[0]
+            zk_node_names.append(name)
+
+        # Get the IP addresses of the Zookeeper nodes by resolving their DNS names
+        zk_node_ips = []
+        for name in zk_node_names:
+            result = dns.resolver.query(name, 'A')
+            for ipval in result:
+                ip = ipval.to_text()
+                zk_node_ips.append(ip)
+                # print("ZK node: ", name, "IP: ", ip)
+
+
         # Create the target groups for the NLBs
         advertised_listeners_starting_port = 8441
         tls_port = 9094
 
-        # Create a public (Internet-facing) NLB
-        nlb = elbv2.NetworkLoadBalancer(self, "public-nlb", load_balancer_name="public-nlb", vpc=vpc, internet_facing=True)
+        # Create a private NLB
+        nlb = elbv2.NetworkLoadBalancer(self, "private-nlb", load_balancer_name="private-nlb", vpc=vpc)
 
         # We need an advertised listener for each individual broker, plus a listener for all brokers
 
@@ -73,6 +93,7 @@ class NlbSetupStack(Stack):
         print("region is ", region)
         zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=vpc)
 
+        # Alias the broker names to the NLB name
         for name in broker_names:
             kafka_index = name.find("kafka")
             route53.ARecord(self, "ARecord"+name[0:3],
@@ -80,3 +101,13 @@ class NlbSetupStack(Stack):
                     zone=zone,
                     target=route53.RecordTarget.from_alias(r53_targets.LoadBalancerTarget(nlb))
             )
+
+        # Add the Zookeeper node A records 
+        for name, ip in zip(zk_node_names, zk_node_ips):
+            kafka_index = name.find("kafka")
+            route53.ARecord(self, "ARecord"+name[0:3],
+                    record_name=name[0:kafka_index-1],
+                    zone=zone,
+                    target=route53.RecordTarget.from_values(ip)
+            )
+
