@@ -3,7 +3,7 @@
 This application demonstrates how to publish a real-time financial data feed as a service on AWS. It contains the code for a data provider to send streaming data to its clients via an Amazon MSK cluster. Clients can consume the data using a Kafka client SDK. If the client application is in another AWS account, it can connect to the provider's feed directly through AWS PrivateLink. The client can subscribe to a Kafka topic (e.g., "stock-quotes") to consume the data that is of interest. The client and provider authenticate each other using mutual TLS.
 
 ## Pre-requisites
-You will need an existing Amazon Linux EC2  instance to deploy the cluster and run the Kafka client application. This client instance should have git, Python 3.7, and the AWS CLI installed. You should run **aws configure** to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the client instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). 
+You will need an existing Amazon Linux EC2  instance to deploy the cluster and run the Kafka client application. This client instance should have git, Python 3.7, and the AWS CLI installed. You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the client instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). 
 
 ## Deployment steps
 ### Creating a Private Certificate Authority 
@@ -22,7 +22,14 @@ These steps will create a new VPC, and launch the MSK cluster there, along with 
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
 cd msk-powered-financial-data-feed
 ``` 
-2. Edit the ```env-vars.sh``` shell script file and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from
+2. Create a file called ```env-vars.sh``` in the ```cluster-setup`` folder by running the following commands. 
+```
+cd cluster-setup
+echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> env-vars.sh
+echo "export NEC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh
+chmod +x env-vars.sh
+```
+Edit the file and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from
 the CA details page. Then run the shell script: ``` source env-vars.sh``` 
 
 3. Deploy the required infrastructure using the following cdk commands. 
@@ -34,8 +41,7 @@ cdk deploy
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
-cp -r msk-powered-financial-data-feed/bin $HOME/bin 
-export PATH=$PATH:$HOME/bin 
+export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
 cd kafka
 ```
 5. Generate a certificate signing request (CSR) for the client cert.  The command below will prompt you to enter a password for your keystore and your organization details. 
@@ -44,19 +50,20 @@ cd kafka
 ```
 You now have a CSR file named ```client-cert.csr```
 
-6. Run the following command to sign and issue the client cert. 
+6. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
+7. Then run the following command to sign and issue the client cert.
 ```
       issuecert client-cert.csr > client-cert.json 
 ```
-7. Copy the certificate strings from the ```client-cert.json``` file to a new file named ```client-cert.pem``` as described in Step 10 at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html) 
+8. Copy the certificate strings from the ```client-cert.json``` file to a new file named ```client-cert.pem``` as described in Step 10 at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html) 
 
-8. Run the following command to add this certificate to your keystore so you can present it when you talk to the MSK brokers.
+9. Run the following command to add this certificate to your keystore so you can present it when you talk to the MSK brokers.
 ```
     importcert client-cert.pem
 ```
    Type ```yes``` when asked if you want to install the reply. You now have a new file named ```client.properties``` which will be used by your Kafka application. 
 
-9. Test that you can create a  topic and run the Kafka producer and consumer console client applications as described in the section **To produce and consume messages using authentication** at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html)  
+10. Test that you can create a  topic and run the Kafka producer and consumer console client applications as described in the section **To produce and consume messages using authentication** at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html)  
  
 ## Contributors
 

@@ -1,0 +1,64 @@
+#!/bin/bash
+#
+# kfeed - Kafka-related commands for publishing a data feed
+#
+USAGE="kfeed [-c|--create-topic topic] [-l|--list-topics] [-u|--update-advertised-listeners]"
+#
+if [[ $# -lt 1 ]]; then
+    echo $USAGE
+    exit 1
+fi
+
+if [ "$TLSBROKERS" = "" ]; then
+    echo "TLSBROKERS env vasriable should be set to your MSK cluster broker string"
+    exit 1
+fi
+
+if [ "$ZKNODES" = "" ]; then
+    echo "ZKNODES env vasriable should be set to your MSK cluster Zookeeper string"
+    exit 1
+fi
+
+if [[ ! -f $HOME/kafka/bin/kafka-topics.sh ]]; then
+    echo "Kafka tools are not installed."
+    exit 1
+fi
+
+
+
+function list_topics()
+{
+    $HOME/kafka/bin/kafka-topics.sh --list --zookeeper $ZKNODES
+}
+
+function create_topic()
+{
+    $HOME/kafka/bin/kafka-topics.sh --create --topic $topic --zookeeper $ZKNODES --partitions 1 --replication-factor 2
+}
+
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -l|--list-topics)
+            list_topics
+            exit 0
+            ;;
+
+        -c|--create-topic)
+            topic=$2
+            create_topic
+            exit 0
+            ;;
+
+        -h|--help)
+            echo $USAGE
+            exit 0
+            ;;
+
+            *)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+        esac
+done
+
