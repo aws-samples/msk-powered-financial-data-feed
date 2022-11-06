@@ -26,7 +26,7 @@ cd msk-powered-financial-data-feed
 ```
 cd cluster-setup
 echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> env-vars.sh
-echo "export NEC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh
+echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh
 chmod +x env-vars.sh
 ```
 Edit the file and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from

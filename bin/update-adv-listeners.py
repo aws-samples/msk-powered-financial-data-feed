@@ -20,8 +20,7 @@ for url in brokers:
     name = url.split(':')[0]
     broker_names.append(name)
 
-# advertised_listeners_starting_port = 8441
-advertised_listeners_starting_port = 3000
+advertised_listeners_starting_port = 8441
 
 command_part1 = os.environ["HOME"] + "/kafka/bin/kafka-configs.sh --bootstrap-server "
 command_part2 = " --entity-type brokers --entity-name "
