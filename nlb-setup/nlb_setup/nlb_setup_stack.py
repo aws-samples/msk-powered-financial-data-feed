@@ -8,7 +8,8 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
     aws_elasticloadbalancingv2_targets as target,
     aws_route53_targets as r53_targets,
-    aws_route53 as route53
+    aws_route53 as route53,
+    Fn
 )
 
 from constructs import Construct
@@ -19,7 +20,11 @@ class NlbSetupStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
     
-        vpc = ec2.Vpc.from_lookup(self, "msk-vpc", vpc_name="DataFeedUsingMskStack/my-msk-vpc")
+        msk_vpc_id = os.environ["MSK_VPC_ID"]
+
+
+        msk_vpc = ec2.Vpc.from_lookup(self, "msk-vpc", vpc_id=msk_vpc_id)
+        print("VPC ID is ", msk_vpc.vpc_id)
 
 
         # Get list of MSK brokers in cluster from env variable
@@ -67,7 +72,7 @@ class NlbSetupStack(Stack):
         tls_port = 9094
 
         # Create a private NLB
-        nlb = elbv2.NetworkLoadBalancer(self, "private-nlb", load_balancer_name="private-nlb", vpc=vpc)
+        nlb = elbv2.NetworkLoadBalancer(self, "private-nlb", load_balancer_name="private-nlb", vpc=msk_vpc)
 
         # We need an advertised listener for each individual broker, plus a listener for all brokers
 
@@ -91,7 +96,7 @@ class NlbSetupStack(Stack):
 
         region = os.getenv('CDK_DEFAULT_REGION')
         print("region is ", region)
-        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=vpc)
+        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=msk_vpc)
 
         # Alias the broker names to the NLB name
         for name in broker_names:

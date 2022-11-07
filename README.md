@@ -63,8 +63,52 @@ You now have a CSR file named ```client-cert.csr```
 ```
    Type ```yes``` when asked if you want to install the reply. You now have a new file named ```client.properties``` which will be used by your Kafka application. 
 
-10. Test that you can create a  topic and run the Kafka producer and consumer console client applications as described in the section **To produce and consume messages using authentication** at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html)  
- 
+10. Set up some environment variables in your .bashrc file. 
+```
+echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
+echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
+echo "export MSK_VPC_ID='The VPC ID of the MSK cluster VPC'" >> ~/,bashrc
+```
+You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client informnation**  on your MSK cluster details page. The VPC ID of the MSK cluster's VPC can be found in your AWS VPC console. Then  run ```source ~/.bashrc```
+
+11. Create a test topic
+
+```
+   kfeed --create-topic ExampleTopic 
+   kfeed -l   # list the topics in thne cluster 
+```
+
+12. Run the kafka console producer
+```
+    ~/kafka/bin/kafka-console-producer.sh --broker-list $TLSBROKERS --topic ExampleTopic --producer.config ~/kafka/client.properties
+```
+
+13. In a separate terminal window on the same machine, run the kafka console consumer 
+```
+    ~/kafka/bin/kafka-console-consumer.sh --bootstrap-server $TLSBROKERS --topic ExampleTopic --consumer.config $HOME/kafka/client.properties
+```
+Test by typing messages in the console producer window and making sure they appear in the consumer window
+
+
+### Deploying the NLB 
+The steps below will create the private NLB through which the MSK cluster will be accessed along with a Route 53 Private Hosted Zones that aliases the broker names to the NLB.
+
+1. Update the advertised listener ports on the MSK cluster
+```
+    kfeed -u
+```
+
+2. Type the following commands to deploy the NLB CDK stack,
+```
+cd nlb-setup
+cdk synth
+cdk deploy
+```
+
+3. Test that you can now send and receive messages through the NLB by repeating steps 12 and 13 above.
+
+
+
 ## Contributors
 
 [Diego Soares](https://www.linkedin.com/in/diegogsoares/)

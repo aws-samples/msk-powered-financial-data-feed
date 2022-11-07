@@ -4,6 +4,9 @@
 #
 USAGE="kfeed [-c|--create-topic topic] [-l|--list-topics] [-u|--update-advertised-listeners]"
 #
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
 if [[ $# -lt 1 ]]; then
     echo $USAGE
     exit 1
@@ -55,10 +58,15 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
 
-            *)
+        -u|--update-advertised-listeners)
+            python ${SCRIPT_DIR}/update-adv-listeners.py
+            exit 0
+            ;;
+
+        *)
             echo "Unknown option $1"
             exit 1
             ;;
-        esac
+    esac
 done
 

@@ -5,7 +5,8 @@ from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
     aws_msk as msk,
-    aws_iam as iam
+    aws_iam as iam,
+    CfnOutput
 )
 from constructs import Construct
 
@@ -88,4 +89,4 @@ class DataFeedUsingMskStack(Stack):
         commands = f.read()
         instance.add_user_data(commands)
 
- 
+        CfnOutput(self, "MskVpcId", export_name="msk-vpc-id", value=vpc.vpc_id)
