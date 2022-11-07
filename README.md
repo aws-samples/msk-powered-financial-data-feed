@@ -22,14 +22,14 @@ These steps will create a new VPC, and launch the MSK cluster there, along with 
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
 cd msk-powered-financial-data-feed
 ``` 
-2. Create a file called ```env-vars.sh``` in the ```cluster-setup`` folder by running the following commands. 
+2. Create a shell script file called ```env-vars.sh``` in the ```cluster-setup``` folder by running the following commands. 
 ```
 cd cluster-setup
 echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> env-vars.sh
 echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh
 chmod +x env-vars.sh
 ```
-Edit the file and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from
+Edit this shell script and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from
 the CA details page. Then run the shell script: ``` source env-vars.sh``` 
 
 3. Deploy the required infrastructure using the following cdk commands. 
@@ -37,7 +37,7 @@ the CA details page. Then run the shell script: ``` source env-vars.sh```
 cdk synth
 cdk deploy
 ```
-4. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as ec2-user. You should see a directory named ```kafka``` in your home directory. Then run the following commands.
+4. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. You should see a directory named ```kafka``` in your home directory. Then run the following commands.
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
@@ -46,20 +46,22 @@ cd kafka
 ```
 5. Generate a certificate signing request (CSR) for the client cert.  The command below will prompt you to enter a password for your keystore and your organization details. 
 ```
-    makecsr
+makecsr
 ```
 You now have a CSR file named ```client-cert.csr```
 
 6. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
+
 7. Then run the following command to sign and issue the client cert.
 ```
-      issuecert client-cert.csr > client-cert.json 
+issuecert client-cert.csr > client-cert.json 
 ```
+
 8. Copy the certificate strings from the ```client-cert.json``` file to a new file named ```client-cert.pem``` as described in Step 10 at [Mutual TLS authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html) 
 
 9. Run the following command to add this certificate to your keystore so you can present it when you talk to the MSK brokers.
 ```
-    importcert client-cert.pem
+importcert client-cert.pem
 ```
    Type ```yes``` when asked if you want to install the reply. You now have a new file named ```client.properties``` which will be used by your Kafka application. 
 
@@ -75,7 +77,7 @@ You can find the values for your Bootstrap servers string and Zookeeper connecti
 
 ```
    kfeed --create-topic ExampleTopic 
-   kfeed -l   # list the topics in thne cluster 
+   kfeed -l   # list the topics in the cluster 
 ```
 
 12. Run the kafka console producer
@@ -98,7 +100,7 @@ The steps below will create the private NLB through which the MSK cluster will b
     kfeed -u
 ```
 
-2. Type the following commands to deploy the NLB CDK stack,
+2. Type the following commands to deploy the NLB CDK stack.
 ```
 cd nlb-setup
 cdk synth
