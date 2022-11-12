@@ -45,7 +45,6 @@ class NlbSetupStack(Stack):
             for ipval in result:
                 ip = ipval.to_text()
                 broker_ips.append(ip)
-                # print("Broker: ", name, "IP: ", ip)
         
 
         # Get the list of Zookeeper nodes from the env variable
@@ -73,7 +72,8 @@ class NlbSetupStack(Stack):
         tls_port = 9094
 
         # Create a private NLB
-        nlb = elbv2.NetworkLoadBalancer(self, "private-nlb", load_balancer_name="private-nlb", vpc=msk_vpc)
+        nlb = elbv2.NetworkLoadBalancer(self, "private-nlb", 
+            load_balancer_name="private-nlb", cross_zone_enabled=True, vpc=msk_vpc)
 
         # We need an advertised listener for each individual broker, plus a listener for all brokers
 
@@ -95,9 +95,31 @@ class NlbSetupStack(Stack):
 
         # Create a VPC endpoint service for PrivateLink access
 
-
         vpce = ec2.VpcEndpointService(self, "vpc-endpoint-service",
             vpc_endpoint_service_load_balancers=[nlb],
-            acceptance_required=True
+            allowed_principals=[iam.ArnPrincipal("*")],
+            acceptance_required=False
         )
 
+        # Create a Route 53 Private Hosted Zone
+
+        region = os.getenv('CDK_DEFAULT_REGION')
+        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=msk_vpc)
+        
+        # Alias the broker names to the NLB name
+        for name in broker_names:
+            kafka_index = name.find("kafka")
+            route53.ARecord(self, "ARecord"+name[0:3],
+                    record_name=name[0:kafka_index-1],
+                    zone=zone,
+                    target=route53.RecordTarget.from_alias(r53_targets.LoadBalancerTarget(nlb))
+            )
+
+        # Add the Zookeeper node A records 
+        for name, ip in zip(zk_node_names, zk_node_ips):
+            kafka_index = name.find("kafka")
+            route53.ARecord(self, "ARecord"+name[0:3],
+                    record_name=name[0:kafka_index-1],
+                    zone=zone,
+                    target=route53.RecordTarget.from_values(ip)
+            )
