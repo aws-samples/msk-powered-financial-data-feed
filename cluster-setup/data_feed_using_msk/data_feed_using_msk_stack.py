@@ -66,19 +66,19 @@ class DataFeedUsingMskStack(Stack):
         )
 
         # Security group
-        dev_instance_security_group = ec2.SecurityGroup(self, "dev-instance-security-group",
+        provider_instance_security_group = ec2.SecurityGroup(self, "provider-instance-security-group",
             vpc = vpc,
-            description="Development instance security group",
-            security_group_name="dev-instance-sg",
+            description="Provider instance security group",
+            security_group_name="provider-instance-sg",
             allow_all_outbound=True,
         )
-        dev_instance_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22), "allow ssh access from anywhere")
+        provider_instance_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22), "allow ssh access from anywhere")
 
         # Instance
-        instance = ec2.Instance(self, "Instance",
+        instance = ec2.Instance(self, "msk-provider-instance",
             instance_type = ec2.InstanceType("t3.large"),
             machine_image = amzn_linux,
-            security_group = dev_instance_security_group,
+            security_group = provider_instance_security_group,
             vpc_subnets=ec2.SubnetSelection(subnet_type = ec2.SubnetType.PUBLIC),
             vpc = vpc,
             key_name = os.environ["EC2_KEY_PAIR"]

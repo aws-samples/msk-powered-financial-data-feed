@@ -3,7 +3,7 @@
 This application demonstrates how to publish a real-time financial data feed as a service on AWS. It contains the code for a data provider to send streaming data to its clients via an Amazon MSK cluster. Clients can consume the data using a Kafka client SDK. If the client application is in another AWS account, it can connect to the provider's feed directly through AWS PrivateLink. The client can subscribe to a Kafka topic (e.g., "stock-quotes") to consume the data that is of interest. The client and provider authenticate each other using mutual TLS.
 
 ## Pre-requisites
-You will need an existing Amazon Linux EC2  instance to deploy the cluster and run the Kafka client application. This client instance should have git, Python 3.7, and the AWS CLI installed. You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the client instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). 
+You will need an existing Amazon Linux EC2  instance to deploy the cluster. This deployment instance should have git, Python 3.7, and the AWS CLI installed. You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the deployment instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). 
 
 ## Deployment steps
 ### Creating a Private Certificate Authority 
@@ -15,25 +15,25 @@ The Kafka provider and client will authenticate each other using mutual TLS (mTL
 
 
 ### Deploying the MSK Cluster and  Provider EC2 Instance
-These steps will create a new VPC, and launch the MSK cluster there, along with a new EC2 instance to run the provider app. 
+These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
 
-1. Log in to your client EC2 instance using ssh and clone this repo. 
+1. Log in to your client EC2 instance using ssh, and clone this repo. 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
 cd msk-powered-financial-data-feed
 ``` 
-2. Create a shell script file called ```env-vars.sh``` in the ```cluster-setup``` folder by running the following commands. 
+2. Add the following shell environment variables to your .bashrc file
+```
+echo "export CDK_DEFAULT_ACCOUNT=123456789012" >> ~/.bashrc
+echo "export CDK_DEFAULT_REGION="us-east-1" >> ~/.bashrc
+echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh >> ~/.bashrc
+echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
+```
+Then update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page. Then run : ``` source ~/.bashrc``` 
+
+3. Deploy the MSK cluster and other required infrastructure using the following cdk commands. 
 ```
 cd cluster-setup
-echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> env-vars.sh
-echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh
-chmod +x env-vars.sh
-```
-Edit this shell script and update the environment variables there. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from
-the CA details page. Then run the shell script: ``` source env-vars.sh``` 
-
-3. Deploy the required infrastructure using the following cdk commands. 
-```
 cdk synth
 cdk deploy
 ```
@@ -69,9 +69,8 @@ importcert client-cert.pem
 ```
 echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
 echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
-echo "export MSK_VPC_ID='The VPC ID of the MSK cluster VPC'" >> ~/,bashrc
 ```
-You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client informnation**  on your MSK cluster details page. The VPC ID of the MSK cluster's VPC can be found in your AWS VPC console. Then  run ```source ~/.bashrc```
+You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client informnation**  on your MSK cluster details page. Then  run ```source ~/.bashrc```
 
 11. Create a test topic
 
@@ -89,25 +88,60 @@ You can find the values for your Bootstrap servers string and Zookeeper connecti
 ```
     ~/kafka/bin/kafka-console-consumer.sh --bootstrap-server $TLSBROKERS --topic ExampleTopic --consumer.config $HOME/kafka/client.properties
 ```
-Test by typing messages in the console producer window and making sure they appear in the consumer window
+Test this basic setup by typing messages in the console producer window and making sure they appear in the consumer window. The next step is to deploy the NLB through which the messages will flow.
 
 
 ### Deploying the NLB 
-The steps below will create the private NLB through which the MSK cluster will be accessed along with a Route 53 Private Hosted Zones that aliases the broker names to the NLB.
+The steps below will create a private NLB plus a VPC endpoint service that allows the cluster to be accessed via PrivateLink. It also sets up a Route 53 Private Hosted Zone that aliases the Kafka broker DNS names to the NLB.
 
-1. Update the advertised listener ports on the MSK cluster
+1. On the provider instance, update the advertised listener ports on the MSK cluster
 ```
     kfeed -u
 ```
+The above command updates the advertised listeners on the MSK cluster to allow the NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). 
 
-2. Type the following commands to deploy the NLB CDK stack.
+2. Go back to your deployment instance and add the following environment variable to your .bashrc file.
 ```
-cd nlb-setup
+   echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
+   echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
+   echo "export MSK_VPC_ID='The VPC ID of the MSK cluster'" >> ~/.bashrc
+```
+You can find the ID of the VPC where the MSK cluster was deployed in your AWS VPC console.  Then run ```source ~/.bashrc```
+
+3.  Type the following commands to deploy the NLB CDK stack.
+```
+cd ../nlb-setup
 cdk synth
 cdk deploy
 ```
 
-3. Test that you can now send and receive messages through the NLB by repeating steps 12 and 13 above.
+3. Go to your provider instance and test that you can now send and receive messages through the NLB by repeating steps 12 and 13 above. The next step is to create a client VPC to run the Kafka consumer application.
+
+### Deploying the Kafka client application
+The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. A VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name will also be created. 
+
+1. Go to your deployment instance and add the following environment variable to your .bashrc file.
+```
+    echo "export MSK_VPC_ENDPOINT_SERVICE=com.amazonaws.vpce.<region>.vpce-svc-<your-endpoint-service-ID>" >> ~/.bashrc
+```
+You can find the name of your VPC endpoint service by clicking on **Endpoint services** in your AWS VPC console, and selecting the service, and looking in the service details section. The name begins with com.amazonaws.
+
+2. Then create the client infrastructure in a new client VPC by typing the following.
+```
+    cd ../client-setup
+    cdk synth
+    cdk deploy
+```
+
+3. You should now see a new client instance in your EC2 dashboard. Ssh to it and repeat steps 4 through 9 under the **Deploying the MSK Cluster** section above, starting with running **makecsr** to create the CSR file and ending with importing the issued certificate to the local keystore file. 
+
+4. Set up the following environment variable in your .bashrc file. 
+```
+echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
+```
+Run ```source ~/.bashrc``` after updating the value.
+
+5. Repeat steps 12 and 13 under **Deploying the MSK Cluster** to verify that you can now send messages from the provider instance to the client instance through the MSK PrivateLink endpoint service.
 
 
 
