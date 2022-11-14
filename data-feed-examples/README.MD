@@ -9,7 +9,7 @@ Before you start:
     python3 -m pip install -r requirements.txt
     ```
 
-2. Follow the instructions on setting up TLS for your clients in [this document](../Best%20Practices/SetupTLS.md) 
+2. Follow the instructions on setting up TLS for your clients in [this document](../best-practices/SetupTLS.md) 
 3. Create an environment variable called **TLSBROKERS** that contains the bootstrap servers DNS names.
 
     ```
