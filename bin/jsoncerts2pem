@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# jsoncerts2pem - Convert a JSON file containing a certificate and certificate chain to PEM format 
+#
+USAGE="jsoncerts2pem cert_file.json"
+#
+# Creates a file with a .pem suffix using the base name of the input file 
+# (e.g., input file cert_file.json produces cert_file.pem)
+#
+
+if [ "$#" != 1 ]; then
+    echo $USAGE
+    exit 1
+fi
+
+json_file=$1
+if [ ! -f "$json_file" ]; then
+    echo "$json_file does not exist."
+    exit 1
+fi
+
+tmpfile1=`basename $json_file .json`.tmp1
+tmpfile2=`basename $json_file .json`.tmp2
+outfile=`basename $json_file .json`.pem
+
+# Append the chain cert to the cert after extracting both
+jq '.["Certificate"]' $json_file > $tmpfile1
+jq '.["CertificateChain"]' $json_file   >> $tmpfile1
+
+# Convert newline chars to carriage returns
+awk '{gsub(/\\n/,"\n")}1' $tmpfile1 > $tmpfile2
+rm -f $tmpfile1
+
+# Strip out the quotes
+sed 's/\"//' $tmpfile2 > $outfile
+rm -f $tmpfile2
+
