@@ -131,7 +131,7 @@ This uses your ACM Private Certificate Authority to sign and generate the certif
     makecsr
 ```
 
-5, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, you wopuld upload the CSR file to the provider's Website for signing.)
+5, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
 ```
     issuecert client_cert.csr
 ```
@@ -147,6 +147,36 @@ Copy the generated client_cert.pem file back to the client instance, and put it 
     python3 producer.py 
 ```
 
+8. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
+
+9. Sign up for the Alpaca free tier API.
+
+10. Generate an **API KEY ID** and a **Secret Key**
+
+11. Export them to the following environment variables.
+
+    ```
+    export APCA_API_KEY_ID="<API KEY ID>"
+    export APCA_API_SECRET_KEY="<Secret Key>"
+    ```
+
+12. Log in using ssh to the provider instance and create the following topics. 
+```
+    kfeed -c trade 
+    kfeed -c quote
+    kfeed -c crypto_quote
+    kfeed -l 
+``` 
+
+13. Run the producer in the ```data-feed-examples``` folder. 
+```
+    python3 alpaca-producer.py
+```
+
+14. In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
+```
+    python3 alpaca-consumer.py
+```
 
 ## Contributors
 

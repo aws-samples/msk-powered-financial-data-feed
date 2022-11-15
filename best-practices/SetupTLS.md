@@ -7,36 +7,31 @@ This document describes the steps that you need to setup TLS for the following c
 
 ## Setting up Python for TLS
 
-1. Change to the folder where your python client is.
-2. Create the private key file named `private_key.pem`.
+2. In the provider instance, create a private key and certificate signing request (CSR) file for the provider application. 
+```
+    makecsr
+```
+Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
+* private_key.pem - Private key for mutual TLS
+* client_cert.csr - Certificate signing request file
+* truststore.pem - Store of external certificates that are trusted
 
-    ```
-    openssl genrsa -out private_key.pem 2048
-    ```
+3. Sign and issue the certificate file by running
+```
+    issuecert client_cert.csr
+```
+This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
 
-3. Create a Certificate Signing Request (CSR)
+4, In a separate terminal window, ssh to your client instance and enter the following.
+```
+    cd msk-powered-financial-data-feed/data-feed-examples
+    makecsr
+```
 
-    ```
-    openssl req -new -sha256 -key private_key.pem -out client_cert.csr
-    ```
-
-4. Verify if your signing request is correct
-
-    ```
-    openssl req -text -noout -verify -in client_cert.csr
-    ```
-
-5. Share your CSR file with your data provider to sign the request. If you are the data provider follow instructions [in this document](./SetupPKI.md)
-
-6. Save the certificate received by your data provider on a file named `client_cert.pem`.
-6. Create the public trust store with Amazon Public CA certificate file named `truststore.pem`.
-
-    ```
-    find /usr/lib/jvm/ -name "cacerts" -exec cp {} kafka.client.truststore.jks \;
-
-    keytool -importkeystore -srckeystore kafka.client.truststore.jks -destkeystore truststore.p12 -srcstoretype jks -deststoretype pkcs12
-  
-    openssl pkcs12 -in truststore.p12 -out truststore.pem
-    ```
+5, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
+```
+    issuecert client_cert.csr
+```
+Copy the generated client_cert.pem file back to the client instance, and put it in the ```data-feed-examples``` folder. 
 
 ## Setting up Kakfa tools Client
