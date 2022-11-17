@@ -41,7 +41,7 @@ class DataFeedUsingMskStack(Stack):
         msk.CfnCluster( self, 'msk-cluster', 
             cluster_name='my-msk-cluster', 
             number_of_broker_nodes=len(vpc.public_subnets),
-            kafka_version='2.3.1', 
+            kafka_version='2.8.1', 
             broker_node_group_info=msk.CfnCluster.BrokerNodeGroupInfoProperty(
                 instance_type="kafka.m5.large",
                 security_groups = [msk_cluster_security_group.security_group_id],

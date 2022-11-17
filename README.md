@@ -34,6 +34,7 @@ Then update the above variables with your AWS account number, region you are dep
 3. Deploy the MSK cluster and other required infrastructure using the following cdk commands. 
 ```
 cd cluster-setup
+cdk bootstrap
 cdk synth
 cdk deploy
 ```
