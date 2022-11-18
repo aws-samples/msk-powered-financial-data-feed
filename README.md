@@ -38,33 +38,58 @@ cdk bootstrap
 cdk synth
 cdk deploy
 ```
-4. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. In your home directory, run the following commands.
+
+### Setting up the provider instance
+
+1. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. In your home directory, run the following commands.
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
 export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
 ```
 
-5. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
+2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
 
-6. Set up some environment variables in your .bashrc file. 
+3. Set up some environment variables in your .bashrc file. 
 ```
 echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
 echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
 ```
-You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client informnation**  on your MSK cluster details page. Then  run ```source ~/.bashrc```
+You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**. Then  run ```source ~/.bashrc```
 
+4. Create a test Kafka topic named topic1 using the **kfeed** command.
+```
+    kfeed --create-topic topic1
 
-### Deploying the NLB 
-The steps below will create a private NLB plus a VPC endpoint service that allows the cluster to be accessed via PrivateLink. It also sets up a Route 53 Private Hosted Zone that aliases the Kafka broker DNS names to the NLB.
+```
 
-1. On the provider instance, update the advertised listener ports on the MSK cluster
+5. Create a private key and certificate signing request (CSR) file for the provider application. 
+```
+    cd msk-powered-financial-data-feed/data-feed-examples 
+    makecsr
+```
+Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
+* private_key.pem - Private key for mutual TLS
+* client_cert.csr - Certificate signing request file
+* truststore.pem - Store of external certificates that are trusted
+
+6. Sign and issue the certificate file by running
+```
+    issuecert client_cert.csr
+```
+This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
+
+7. Update the advertised listener ports on the MSK cluster
 ```
     kfeed -u
 ```
 The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). 
 
-2. Go back to your deployment instance and add the following environment variable to your .bashrc file.
+### Deploying the NLB 
+The steps below will create a private NLB plus a VPC endpoint service that allows the cluster to be accessed via PrivateLink. It also sets up a Route 53 Private Hosted Zone that aliases the Kafka broker DNS names to the NLB.
+
+
+1. Go back to your deployment instance and add the following environment variable to your .bashrc file.
 ```
    echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
    echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
@@ -72,14 +97,14 @@ The above command updates the advertised listeners on the MSK cluster to allow t
 ```
 You can find the ID of the VPC where the MSK cluster was deployed in your AWS VPC console.  Then run ```source ~/.bashrc```
 
-3.  Type the following commands to deploy the NLB CDK stack.
+2.  Type the following commands to deploy the NLB CDK stack.
 ```
 cd ../nlb-setup
 cdk synth
 cdk deploy
 ```
 
-### Deploying the Kafka client application
+### Deploying the Kafka client instance
 The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. They will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
 
 1. Go to your deployment instance and add the following environment variable to your .bashrc file.
@@ -101,31 +126,8 @@ echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
 ```
 Run ```source ~/.bashrc``` after updating the value.
 
-### Deploying the financial data feed producer and consumer 
+### Deploying the financial data feed provider and consumer 
 The steps below will deploy the data feed producer and consumer apps on the provider and client EC2 instances respectively. 
-
-1. Ssh to your provider instance and run the following commands to create a test Kafka topic named topic1.
-```
-    cd msk-powered-financial-data-feed/data-feed-examples 
-    kfeed --create-topic topic1
-
-```
-
-2. Create a private key and certificate signing request (CSR) file for the provider application. 
-```
-    makecsr
-```
-Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
-* private_key.pem - Private key for mutual TLS
-* client_cert.csr - Certificate signing request file
-* truststore.pem - Store of external certificates that are trusted
-
-3. Sign and issue the certificate file by running
-```
-    issuecert client_cert.csr
-```
-This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
-
 4, In a separate terminal window, ssh to your client instance and enter the following.
 ```
     cd msk-powered-financial-data-feed/data-feed-examples
