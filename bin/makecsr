@@ -1,7 +1,8 @@
 #!/bin/bash
 # makecsr - Make a private key file and CSR (Certificate Signing Request)
 #
-# Outputs a private_key.pem file, a client_cert.csr file and a truststore.pem file
+# Outputs a private_key.pem file, a client_cert.csr file and a truststore.pem file for Kafka applications
+# If given the -k option, this creates the cert using keytool for the Kafka broker
 #
 cacerts_file=`find /usr/lib/jvm -name cacerts -print`
 keystore_file=kafka.client.keystore.jks
@@ -15,6 +16,25 @@ then
         echo "Java is not installed. To install Java: $ yum -y install java-1.8.0"
         exit 1
 fi
+
+while getopts 'kh' opt; do
+    case "$opt" in
+      k)
+        cp $cacerts_file $truststore_jks
+        keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12
+        keytool -keystore $keystore_file -certreq -file raw-client-cert.csr -alias kafka-key
+        sed 's/NEW //' raw-client-cert.csr > $csr_file
+        rm -f raw-client-cert.csr
+        exit 0
+        ;;
+
+      ?|h)
+        echo "Usage: $(basename $0) [-k]" 
+        exit 1
+        ;;
+    esac
+done
+
 openssl genrsa -out $private_key_file 2048
 openssl req -new -sha256 -key $private_key_file -out $csr_file
 # Make the truststore file

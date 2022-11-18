@@ -14,7 +14,7 @@ The Kafka provider and client will authenticate each other using mutual TLS (mTL
 3. Once the CA becomes active, select **Actions -> Install CA certificate** on the CA's details page to install the root certificate. 
 
 
-### Deploying the MSK Cluster and  Provider EC2 Instance
+### Deploying the MSK Cluster and Provider EC2 Instance
 These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
 
 1. Log in to your client EC2 instance using ssh, and clone this repo. 
@@ -39,9 +39,7 @@ cdk synth
 cdk deploy
 ```
 
-### Setting up the provider instance
-
-1. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. In your home directory, run the following commands.
+4. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. In your home directory, run the following commands.
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
@@ -57,29 +55,20 @@ echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc
 ```
 You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**. Then  run ```source ~/.bashrc```
 
-4. Create a test Kafka topic named topic1 using the **kfeed** command.
+4. In your ```kafka``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate. Make sure you type the **-k** option on the **makecsr** command below.
 ```
-    kfeed --create-topic topic1
+    cd kafka
+    makecsr -k
+```
+Enter your orgranization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called client_cert.csr.
 
-```
-
-5. Create a private key and certificate signing request (CSR) file for the provider application. 
-```
-    cd msk-powered-financial-data-feed/data-feed-examples 
-    makecsr
-```
-Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
-* private_key.pem - Private key for mutual TLS
-* client_cert.csr - Certificate signing request file
-* truststore.pem - Store of external certificates that are trusted
-
-6. Sign and issue the certificate file by running
+5. Sign and issue the certificate file by running
 ```
     issuecert client_cert.csr
 ```
 This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
 
-7. Update the advertised listener ports on the MSK cluster
+6. Update the advertised listener ports on the MSK cluster
 ```
     kfeed -u
 ```
@@ -128,11 +117,35 @@ Run ```source ~/.bashrc``` after updating the value.
 
 ### Deploying the financial data feed provider and consumer 
 The steps below will deploy the data feed producer and consumer apps on the provider and client EC2 instances respectively. 
+
+1. On your provider instance, create a test Kafka topic named topic1 using the **kfeed** command.
+```
+    kfeed --create-topic topic1
+
+```
+
+2. Create a private key and certificate signing request (CSR) file for the provider application. 
+```
+    cd msk-powered-financial-data-feed/data-feed-examples 
+    makecsr
+```
+Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
+* private_key.pem - Private key for mutual TLS
+* client_cert.csr - Certificate signing request file
+* truststore.pem - Store of external certificates that are trusted
+
+3. Sign and issue the certificate file by running
+```
+    issuecert client_cert.csr
+```
+This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
+
 4, In a separate terminal window, ssh to your client instance and enter the following.
 ```
     cd msk-powered-financial-data-feed/data-feed-examples
     makecsr
 ```
+Enter the organization details for the client when prompted.
 
 5, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
 ```

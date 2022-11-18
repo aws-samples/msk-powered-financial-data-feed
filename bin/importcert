@@ -2,11 +2,11 @@
 # 
 # importcert - Import a signed certifcate to the keystore, given a PEM file containing the cert and chain cert.
 #
-# Usage: importcert client-cert.pem
+# Usage: importcert client_cert.pem
 #
 #
 if [ "$#" != 1 ]; then
-        echo "Usage: importcert client.cert.pem"
+        echo "Usage: importcert client_cert.pem"
         exit 1
 fi
 
