@@ -6,7 +6,7 @@ tlsbrokers = os.environ.get('TLSBROKERS')
     
 #Create Consumer
 consumer = KafkaConsumer(
-    'topi1', #topic to consume
+    'topic1', #topic to consume
     group_id='consumer_python', #local consumer name
     bootstrap_servers=tlsbrokers, #Brokers List
     # For mTLS auth:

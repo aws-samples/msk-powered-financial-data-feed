@@ -142,6 +142,8 @@ This uses your ACM Private Certificate Authority to sign and generate the certif
 
 4, In a separate terminal window, ssh to your client instance and enter the following.
 ```
+    git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
+    export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
     cd msk-powered-financial-data-feed/data-feed-examples
     makecsr
 ```
