@@ -31,8 +31,10 @@ port = advertised_listeners_starting_port
 
 for name in broker_names:
     internal_name = name[0:3] + "-internal" + name[3:]
+    public_name = name[0:3] + "-public" + name[3:]
     command = command_part1 + name + ":9094" + command_part2 + str(entity_name)
     command += command_part3 + name + ":" + str(port)  + ","
+    command += "CLIENT_SECURE_PUBLIC://" + public_name + ":9194,"
     command += "REPLICATION://" + internal_name + ":9093,"
     command += "REPLICATION_SECURE://" + internal_name + ":9095]"
     print(command)
