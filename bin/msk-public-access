@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# msk-public-access - Enable public access on the given MSK cluster
+#
+USAGE="Usage: msk-public-access cluster-arn"
+#
+if [ $# -lt 1 ]; then
+    echo $USAGE
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "jq command is not installed"
+    exit 1
+fi
+
+cluster_arn=$1
+tmpfile="$(mktemp)"
+aws kafka describe-cluster --cluster-arn $cluster_arn > $tmpfile
+if [ $? -ne 0 ]; then
+    echo "Invalid MSK cluster ARN: $cluster_arn "
+    exit 1
+fi
+current_version=`jq '.["ClusterInfo"]["CurrentVersion"]' $tmpfile | tr -d '"' `
+
+echo "Current version: $current_version"
+echo "Enabling public access..."
+aws kafka update-connectivity --cluster-arn $cluster_arn --current-version $current_version --connectivity-info PublicAccess={Type=SERVICE_PROVIDED_EIPS}

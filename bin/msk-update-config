@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# msk-update-config - Update the configuration of the given MSK cluster with parameters in msk-config.txt
+#
+USAGE="Usage: msk-update-config cluster-arn"
+#
+if [ $# -lt 1 ]; then
+    echo $USAGE
+    exit 1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo "jq command is not installed"
+    exit 1
+fi
+
+if [ ! -f ./msk-config.txt ]; then
+    echo "msk-config.txt not found. Are you in the right directory?"
+    exit 1 
+fi
+
+cluster_arn=$1
+tmpfile="$(mktemp)"
+aws kafka describe-cluster --cluster-arn $cluster_arn > $tmpfile
+if [ $? -ne 0 ]; then
+    echo "Invalid MSK cluster ARN: $cluster_arn "
+    exit 1
+fi
+current_version=`jq '.["ClusterInfo"]["CurrentVersion"]' $tmpfile | cut -d'"' -f 2`
+
+config_info_file=config-info.json
+config_file=msk-config.txt
+
+if [ ! -f $config_info_file ]; then
+    aws kafka create-configuration --name "msk-feed-config" --server-properties fileb://$config_file > $tmpfile
+    config_arn=`jq '.["Arn"]' $tmpfile`
+    echo "{" > $config_info_file
+    echo "    \"Arn\": $config_arn ," >> $config_info_file
+    echo "    \"Revision\": 1" >> $config_info_file
+    echo "}" >> $config_info_file
+
+fi
+config_arn=`jq '.["Arn"]' $config_info_file  | cut -d'"' -f 2`
+aws kafka update-cluster-configuration --cluster-arn $cluster_arn --configuration-info Arn=$config_arn,Revision=1 --current-version $current_version
+if [ $? -ne 0 ]; then
+    echo "Failed to update the cluster configuration."
+    exit 1
+fi

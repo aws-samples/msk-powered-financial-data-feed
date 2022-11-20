@@ -34,11 +34,12 @@ class DataFeedUsingMskStack(Stack):
             security_group_name="msk-cluster-sg",
             allow_all_outbound=True,
         )
-        msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "Allow access to TLS port from within the VPC")
+        msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "Allow access to private TLS port from within the VPC")
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(2181), "Allow access to Zookeeper port from within the VPC")
+        msk_cluster_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(9194), "Allow access to public TLS port from anywhere")
 
         # Create the MSK cluster
-        msk.CfnCluster( self, 'msk-cluster', 
+        msk_cluster = msk.CfnCluster( self, 'msk-cluster', 
             cluster_name='my-msk-cluster', 
             number_of_broker_nodes=len(vpc.public_subnets),
             kafka_version='2.8.1', 
@@ -56,7 +57,7 @@ class DataFeedUsingMskStack(Stack):
             )
         )
 
-        # Create an EC2 instance in this same VPC to set up the MSK cluster and do development
+        # Create an EC2 provider instance in this same VPC to set up the MSK cluster and run the provider app
         # AMI
         amzn_linux = ec2.MachineImage.latest_amazon_linux(
             generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
@@ -90,3 +91,5 @@ class DataFeedUsingMskStack(Stack):
         instance.add_user_data(commands)
 
         CfnOutput(self, "MskVpcId", export_name="msk-vpc-id", value=vpc.vpc_id)
+        CfnOutput(self, "MskClusterArn", export_name="msk-cluster-arn", value=msk_cluster.attr_arn)
+
