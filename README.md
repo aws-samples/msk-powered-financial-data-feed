@@ -62,13 +62,18 @@ You can find the values for your Bootstrap servers string and Zookeeper connecti
 ```
 Enter your orgranization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called client_cert.csr.
 
-5. Sign and issue the certificate file by running
+5. Sign the CSR and issue the certificate by running
 ```
     issuecert client_cert.csr
 ```
-This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
+This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```. 
 
-6. Update the advertised listener ports on the MSK cluster
+6. Import the certificate into your keystore
+```
+    importcert client_cert.pem
+```
+
+7. Update the advertised listener ports on the MSK cluster
 ```
     kfeed -u
 ```

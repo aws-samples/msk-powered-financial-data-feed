@@ -2,13 +2,19 @@
 #
 # kfeed - Kafka-related commands for publishing a data feed
 #
-USAGE="kfeed [-c|--create-topic topic] [-l|--list-topics] [-u|--update-advertised-listeners]"
+# kfeed options
+# 	[-c|--create-topic topic] 
+# 	[-l|--list-topics] 
+# 	[-u|--update-advertised-listeners]
+# 	[-a|--allow user read|write|all topic]
+# 	[-r|--remove user [read|write|all] topic]
 #
+
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 if [[ $# -lt 1 ]]; then
-    echo $USAGE
+    echo "Usage: kfeed [-c topic] [-l] [-u] [-a user read|write|all topic]"
     exit 1
 fi
 
@@ -18,7 +24,7 @@ if [ "$TLSBROKERS" = "" ]; then
 fi
 
 if [ "$ZKNODES" = "" ]; then
-    echo "ZKNODES env vasriable should be set to your MSK cluster Zookeeper string"
+    echo "ZKNODES env vasriable should be set to your MSK cluster text Zookeeper string"
     exit 1
 fi
 
@@ -31,17 +37,61 @@ fi
 
 function list_topics()
 {
+    echo "Topics"
+    echo "------"
     $HOME/kafka/bin/kafka-topics.sh --list --zookeeper $ZKNODES
+    echo " "
+    echo "ACLs"
+    echo "------"
+    $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --list
 }
 
 function create_topic()
 {
     $HOME/kafka/bin/kafka-topics.sh --create --topic $topic --zookeeper $ZKNODES --partitions 1 --replication-factor 2
+    # Give brokers permissions to read from the topic
+    all_brokers=`echo $TLSBROKERS | cut -d":" -f 1 | sed -e 's/b-[1-9]/*/'`
+    $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:CN=$all_brokers" --operation Read --group=* --topic $topic
 }
 
+function allow_user()
+{
+    case "$operation" in 
+        read)
+            op="Read"
+            ;;
+        write)
+            op="Write"
+            ;;
+        all)
+            op="All"
+            ;;
+        *)
+            echo "Operation should be read, write or all"
+            exit 1
+            ;;
+    esac        
+    if [ "$user" = "" ]; then
+        echo "user name is missing"
+        exit 1
+    fi
+    if [ "$topic" = "" ]; then
+        echo "topic is missing"
+        exit 1
+    fi
+    echo "Allow $user $op $topic"
+    group=""
+    if [ "$op" = "Read" ]; then
+        group="--group=*"
+    fi
+    $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:$user" \
+        --operation $op $group --topic $topic 
+}
 
-while [[ $# -gt 0 ]]; do
-    case $1 in
+VALID_ARGS=$(getopt -o hlc:ua: --long allow:,list-topics,create-topic:,update-advertised-listeners -- "$@")
+eval set -- "$VALID_ARGS"
+while [ : ]; do
+    case "$1" in
         -l|--list-topics)
             list_topics
             exit 0
@@ -52,6 +102,16 @@ while [[ $# -gt 0 ]]; do
             create_topic
             exit 0
             ;;
+    
+
+        -a|--allow)
+            user=$2
+            shift
+            operation=$3
+            topic=$4
+            allow_user
+            exit 0
+            ;;
 
         -h|--help)
             echo $USAGE
@@ -59,7 +119,9 @@ while [[ $# -gt 0 ]]; do
             ;;
 
         -u|--update-advertised-listeners)
+            $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:*" --cluster
             python ${SCRIPT_DIR}/update-adv-listeners.py
+            $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --remove --allow-principal "User:*" --cluster
             exit 0
             ;;
 
