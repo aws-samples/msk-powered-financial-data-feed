@@ -40,7 +40,6 @@ class ClientSetupStack(Stack):
 
         # Create a VPC endpoint for the MSK cluster endpoint service
         vpc_endpoint_service = os.environ["MSK_VPC_ENDPOINT_SERVICE"]
-        print("VPC endpoint service: ", vpc_endpoint_service)
 
         # Security group for the VPC endpoint
         vpc_endpoint_security_group = ec2.SecurityGroup(self, "msk-vpc-endpoint-security-group",
@@ -49,9 +48,9 @@ class ClientSetupStack(Stack):
             security_group_name="msk-vpc-endpoint-sg",
             allow_all_outbound=True,
         )
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(9094), "All brokers")
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(8441), "Broker 1")
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(8442), "Broker 2")
+        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "All brokers")
+        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(8441), "Broker 1")
+        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(8442), "Broker 2")
 
         msk_vpc_endpoint = ec2.InterfaceVpcEndpoint(self, "msk-vpc-endpoint",
             vpc=vpc,

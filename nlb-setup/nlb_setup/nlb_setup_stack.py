@@ -25,8 +25,6 @@ class NlbSetupStack(Stack):
 
 
         msk_vpc = ec2.Vpc.from_lookup(self, "msk-vpc", vpc_id=msk_vpc_id)
-        print("VPC ID is ", msk_vpc.vpc_id)
-
 
         # Get list of MSK brokers in cluster from env variable
         broker_string = os.environ["TLSBROKERS"]
