@@ -19,8 +19,9 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 
 1. Log in to your deployment EC2 instance using ssh, and clone this repo. 
 ```
-git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
-cd msk-powered-financial-data-feed
+git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git msk-feed
+cd msk-feed
+export PATH=-$PATH:$HOME/msk-feed/bin
 ``` 
 2. Add the following shell environment variables to your .bashrc file
 ```
@@ -39,7 +40,7 @@ cdk synth
 cdk deploy
 ```
 
-4. Select your [MSK cluster](https://console.aws.com/msk) in the AWS console and copy its ARN to your clipboard. Then enable both public and private access by running
+4. Select your [MSK cluster](https://console.aws.com/msk) in the AWS console after it bceomes Active and copy its ARN to your clipboard. Then enable both public and private access by running
 ```
     msk-public-access <your MSK ARN>
 ```
@@ -48,8 +49,8 @@ cdk deploy
 1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
 
 ```
-git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
-export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
+git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git msk-feed
+export PATH=$PATH:$HOME/msk-feed/bin 
 ```
 
 2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
@@ -132,7 +133,7 @@ The steps below will deploy the data feed producer and consumer apps on the prov
 
 1. Go to your provider instance, and create a private key and certificate signing request (CSR) file for the provider application. 
 ```
-    cd msk-powered-financial-data-feed/data-feed-examples 
+    cd msk-feed/data-feed-examples 
     makecsr
 ```
 Enter your organization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
@@ -148,9 +149,9 @@ This uses your ACM Private Certificate Authority to sign and generate the certif
 
 3, In a separate terminal window, ssh to your client instance and enter the following.
 ```
-    git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
-    export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
-    cd msk-powered-financial-data-feed/data-feed-examples
+    git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git msk-feed
+    export PATH=$PATH:$HOME/msk-feed/bin 
+    cd msk-feed/data-feed-examples
     makecsr
 ```
 Enter the organization details for the client when prompted.
