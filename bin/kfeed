@@ -7,16 +7,17 @@
 # 	[-l|--list-topics] 
 # 	[-u|--update-advertised-listeners]
 # 	[-a|--allow user|cert.pem producer|consumer|read|write|all topic]
-# 	[-r|--remove user [read|write|all] topic]
+# 	[-r|--remove user|cert.pem producer|consumer|read|write|all topic]
+# 	[-d|--delete-topic topic]
 #
 
 function usage()
 {
     echo "kfeed [-c|--create-topic topic] "
     echo "      [-l|--list-topics] "
-	echo "      [-u|--update-advertised-listeners] "
- 	echo "      [-a|--allow user|cert.pem producer|consumer|read|write|all topic] "
- 	echo "      [-r|--remove user|cert.pem producer|consumer|read|write|all topic] "
+    echo "      [-u|--update-advertised-listeners] "
+    echo "      [-a|--allow user|cert.pem producer|consumer|read|write|all topic] "
+    echo "      [-r|--remove user|cert.pem producer|consumer|read|write|all topic] "
     echo "      [-d|--delete-topic topic] "
 }
 
