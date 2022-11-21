@@ -17,7 +17,7 @@ The Kafka provider and client will authenticate each other using mutual TLS (mTL
 ### Deploying the MSK Cluster and Provider EC2 Instance
 These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
 
-1. Log in to your client EC2 instance using ssh, and clone this repo. 
+1. Log in to your deployment EC2 instance using ssh, and clone this repo. 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
 cd msk-powered-financial-data-feed
@@ -39,7 +39,18 @@ cdk synth
 cdk deploy
 ```
 
-4. After the ```cdk deploy``` command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. In your home directory, run the following commands.
+4. When the cluster becomes Active, it supports authentication using mutual TLS. To support both private and public access, we must further secure the cluster by requiring Kafka ACLs for users to access specific topics. To do this, we need to update the configuration. In your AWS console, select your [MSK cluster](https://console.aws.com/msk)and copy the ARN of the cluster to your clipboard. Then run
+```
+    msk-update-config <your MSK ARN>
+```
+
+5. After the configuration update finishes, enable both public and private access by running
+```
+    msk-public-access <your MSK ARN>
+```
+
+### Setting up the provider instance
+1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
@@ -77,7 +88,7 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
 ```
     kfeed -u
 ```
-The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). 
+The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
 
 ### Deploying the NLB 
 The steps below will create a private NLB plus a VPC endpoint service that allows the cluster to be accessed via PrivateLink. It also sets up a Route 53 Private Hosted Zone that aliases the Kafka broker DNS names to the NLB.
@@ -89,7 +100,7 @@ The steps below will create a private NLB plus a VPC endpoint service that allow
    echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
    echo "export MSK_VPC_ID='The VPC ID of the MSK cluster'" >> ~/.bashrc
 ```
-You can find the ID of the VPC where the MSK cluster was deployed in your AWS VPC console.  Then run ```source ~/.bashrc```
+Make sure you use the MSK cluster's **private endpoint** for the TLSBROKERS string, not the public one. Again, use the **Plaintext** Zookeeper connection string for ZKNODES. You can find both these strings when you click the **View client information** button in your MSK cluster details page. You can find the ID of the VPC where the MSK cluster was deployed in your AWS VPC console.  Then run ```source ~/.bashrc```
 
 2.  Type the following commands to deploy the NLB CDK stack.
 ```
@@ -99,7 +110,7 @@ cdk deploy
 ```
 
 ### Deploying the Kafka client instance
-The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. They will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
+The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. These steps will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
 
 1. Go to your deployment instance and add the following environment variable to your .bashrc file.
 ```
@@ -123,29 +134,24 @@ Run ```source ~/.bashrc``` after updating the value.
 ### Deploying the financial data feed provider and consumer 
 The steps below will deploy the data feed producer and consumer apps on the provider and client EC2 instances respectively. 
 
-1. On your provider instance, create a test Kafka topic named topic1 using the **kfeed** command.
-```
-    kfeed --create-topic topic1
 
-```
-
-2. Create a private key and certificate signing request (CSR) file for the provider application. 
+1. Go to your provider instance, and create a private key and certificate signing request (CSR) file for the provider application. 
 ```
     cd msk-powered-financial-data-feed/data-feed-examples 
     makecsr
 ```
-Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
+Enter your organization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
 * private_key.pem - Private key for mutual TLS
 * client_cert.csr - Certificate signing request file
 * truststore.pem - Store of external certificates that are trusted
 
-3. Sign and issue the certificate file by running
+2. Sign and issue the certificate file by running
 ```
     issuecert client_cert.csr
 ```
 This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
 
-4, In a separate terminal window, ssh to your client instance and enter the following.
+3, In a separate terminal window, ssh to your client instance and enter the following.
 ```
     git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
     export PATH=$PATH:$HOME/msk-powered-financial-data-feed/bin 
@@ -154,20 +160,46 @@ This uses your ACM Private Certificate Authority to sign and generate the certif
 ```
 Enter the organization details for the client when prompted.
 
-5, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
+4, Copy the client_cert.csr file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
 ```
     issuecert client_cert.csr
 ```
-Copy the generated client_cert.pem file back to the client instance, and put it in the ```data-feed-examples``` folder. 
+Copy the generated client_cert.pem file back to the client instance, and put it in the ```data-feed-examples``` folder. In your provider instance, you can rename this to consumer_cert,pem and put it in a separate folder.
 
-6. In your client instance, run the test consumer application. 
+4. On your provider instance, create a test Kafka topic named topic1 using the **kfeed** command.
 ```
-    python3 consumer.py
+    kfeed --create-topic topic1
+```
+The above can be shortened to ```kfeed -c topic1```
+
+5. In the provider instance, add an ACL to allow the producer to write to the topic. 
+```
+    kfeed --allow client_cert.pem producer topic1
+```
+The above can be abbreviated as ```kfeed -a client_cert.pem p topic1``` Note that **client_cert.pem** is the certificate you generated earlier for the producer.
+
+6. Find the cert that you generated for the consumer, and add an ACL for the consumer application to consume from the topic, as follows.
+```
+    kfeed --allow consumer_cert.pem consumer topic1
+```
+The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1``` 
+
+
+7. In both the client and provider instances, install the required Python modules by running the following commands. 
+```
+    cd data-feed-examples
+    alias python=python3
+    python -m pip install -r requirements.txt
+```
+
+7. In your client instance, run the test consumer application. 
+```
+    python consumer.py
 ```
 
 7. In your provider instance, run the test producer application.
 ```
-    python3 producer.py 
+    python producer.py 
 ```
 
 8. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
@@ -191,12 +223,23 @@ Copy the generated client_cert.pem file back to the client instance, and put it 
     kfeed -l 
 ``` 
 
-13. Run the producer in the ```data-feed-examples``` folder. 
+13. Add the necessary ACLs to give the producer and consumer access to the topics. 
+```
+    kfeed -a client_cert.pem p trade
+    kfeed -a client_cert.pem p quote
+    kfeed -a client_cert.pem p crypto_quote
+    kfeed -a consumer_cert.pem c trade
+    kfeed -a consumer_cert.pem c quote
+    kfeed -a consumer_cert.pem c crypto_quote
+```
+
+
+14. Run the producer in the ```data-feed-examples``` folder. 
 ```
     python3 alpaca-producer.py
 ```
 
-14. In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
+15. In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
 ```
     python3 alpaca-consumer.py
 ```
