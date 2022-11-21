@@ -63,6 +63,12 @@ function create_topic()
     $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:CN=$all_brokers" --operation Read --group=* --topic $topic
 }
 
+function delete_topic()
+{
+    $HOME/kafka/bin/kafka-topics.sh --delete --topic $topic --zookeeper $ZKNODES 
+    $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --topic $topic --remove
+}
+
 function allow_user()
 {
     op_command="--operation "
@@ -112,7 +118,58 @@ function allow_user()
         $op_command $op $group --topic $topic 
 }
 
-VALID_ARGS=$(getopt -o a:hlc:u --long allow:,help,list-topics,create-topic:,update-advertised-listeners -- "$@")
+
+function remove_user()
+{
+    op_command="--operation "
+    case "$operation" in 
+        r|read)
+            op="Read"
+            ;;
+        w|write)
+            op="Write"
+            ;;
+        a|all)
+            op="All"
+            ;;
+        p|producer)
+            op=""
+            op_command="--producer"
+            ;;
+        c|consumer)
+            op=""
+            op_command="--consumer "
+            ;;
+        *)
+            echo "Operation should be consumer, producer, read, write or all"
+            exit 1
+            ;;
+    esac        
+    if [ "$user" = "" ]; then
+        echo "user name is missing"
+        exit 1
+    fi
+    if [ "$topic" = "" ]; then
+        echo "topic is missing"
+        exit 1
+    fi
+    if [ -f "$user" ] && [ `file $user | cut -d' ' -f 2` = "PEM" ]
+    then 
+        # Find the Owner fields in the certificate file
+        owner=`keytool -printcert -file $user | grep Owner | head -n 1 | cut -d':' -f 2 | tr -d ' '`
+        user=$owner
+    fi
+    echo "Remove $user $op $topic"
+    group=""
+    if [ "$op" = "Read" ] || [ "$op_command" = "--consumer " ]; then
+        group="--group=*"
+    fi
+    $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --remove --allow-principal "User:$user" \
+        $op_command $op $group --topic $topic 
+}
+
+
+VALID_ARGS=$(getopt -o a:r:hlc:d:u --long allow:,remove:,help,list-topics,create-topic:,delete-topic:,update-advertised-listeners -- "$@")
 eval set -- "$VALID_ARGS"
 while [ : ]; do
     case "$1" in
@@ -127,6 +184,11 @@ while [ : ]; do
             exit 0
             ;;
     
+        -d|--delete-topic)
+            topic=$2
+            delete_topic
+            exit 0
+            ;;
 
         -a|--allow)
             user=$2
@@ -134,6 +196,15 @@ while [ : ]; do
             operation=$3
             topic=$4
             allow_user
+            exit 0
+            ;;
+
+        -r|--remove)
+            user=$2
+            shift
+            operation=$3
+            topic=$4
+            remove_user
             exit 0
             ;;
 
@@ -150,7 +221,7 @@ while [ : ]; do
             ;;
 
         *)
-            echo "Unknown option $1"
+            usage
             exit 1
             ;;
     esac
