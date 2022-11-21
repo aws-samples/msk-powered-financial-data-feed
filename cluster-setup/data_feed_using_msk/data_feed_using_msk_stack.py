@@ -39,9 +39,12 @@ class DataFeedUsingMskStack(Stack):
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(9194), "Allow access to public TLS port from anywhere")
 
         # Create the configuration resource for the cluster
-        os.system('msk-create-config')
-        with open('msk-config-arn.txt', 'r') as file:
-            config_arn = file.read().rstrip().replace('"', '')
+        msk_feed_config = msk.CfnConfiguration(self, "msk-feed-config",
+            name="msk-feed-config",
+            server_properties="allow.everyone.if.no.acl.found=false",
+            description="Financial Data Feeds Configuration"
+        )
+
 
         # Create the MSK cluster
         msk_cluster = msk.CfnCluster( self, 'msk-cluster', 
@@ -52,7 +55,9 @@ class DataFeedUsingMskStack(Stack):
                 instance_type="kafka.m5.large",
                 security_groups = [msk_cluster_security_group.security_group_id],
                 client_subnets=[ subnet.subnet_id for subnet in vpc.public_subnets],
-
+                connectivity_info=msk.CfnCluster.ConnectivityInfoProperty(
+                    public_access=msk.CfnCluster.PublicAccessProperty(type="SERVICE_PROVIDED_EIPS")
+                ),
             ),
             client_authentication = msk.CfnCluster.ClientAuthenticationProperty(
                 tls = msk.CfnCluster.TlsProperty(
@@ -61,7 +66,7 @@ class DataFeedUsingMskStack(Stack):
                 )
             ),
             configuration_info = msk.CfnCluster.ConfigurationInfoProperty(
-                arn = config_arn,
+                arn = msk_feed_config.attr_arn,
                 revision = 1
             ),
         )
