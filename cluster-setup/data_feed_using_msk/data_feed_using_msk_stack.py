@@ -38,6 +38,11 @@ class DataFeedUsingMskStack(Stack):
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(2181), "Allow access to Zookeeper port from within the VPC")
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(9194), "Allow access to public TLS port from anywhere")
 
+        # Create the configuration resource for the cluster
+        os.system('msk-create-config')
+        with open('msk-config-arn.txt', 'r') as file:
+            config_arn = file.read().rstrip().replace('"', '')
+
         # Create the MSK cluster
         msk_cluster = msk.CfnCluster( self, 'msk-cluster', 
             cluster_name='my-msk-cluster', 
@@ -54,7 +59,11 @@ class DataFeedUsingMskStack(Stack):
                     certificate_authority_arn_list=[os.environ["ACM_PCA_ARN"]],
                     enabled=True
                 )
-            )
+            ),
+            configuration_info = msk.CfnCluster.ConfigurationInfoProperty(
+                arn = config_arn,
+                revision = 1
+            ),
         )
 
         # Create an EC2 provider instance in this same VPC to set up the MSK cluster and run the provider app

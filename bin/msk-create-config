@@ -22,4 +22,3 @@ if [ ! -f $arn_file ]; then
     rm -f $tmpfile
     echo $config_arn > $arn_file
 fi
-cat $arn_file

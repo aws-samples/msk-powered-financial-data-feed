@@ -39,12 +39,7 @@ cdk synth
 cdk deploy
 ```
 
-4. When the cluster becomes Active, it supports authentication using mutual TLS. To support both private and public access, we must further secure the cluster by requiring Kafka ACLs for users to access specific topics. To do this, we need to update the configuration. In your AWS console, select your [MSK cluster](https://console.aws.com/msk)and copy the ARN of the cluster to your clipboard. Then run
-```
-    msk-update-config <your MSK ARN>
-```
-
-5. After the configuration update finishes, enable both public and private access by running
+4. Select your [MSK cluster](https://console.aws.com/msk) in the AWS console and copy its ARN to your clipboard. Then enable both public and private access by running
 ```
     msk-public-access <your MSK ARN>
 ```

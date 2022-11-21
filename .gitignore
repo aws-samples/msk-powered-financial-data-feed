@@ -211,4 +211,5 @@ config-info.json
 *.csr
 *.pem
 *.jks
+msk-config-arn.txt
 
