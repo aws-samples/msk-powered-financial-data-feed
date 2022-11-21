@@ -6,15 +6,24 @@
 # 	[-c|--create-topic topic] 
 # 	[-l|--list-topics] 
 # 	[-u|--update-advertised-listeners]
-# 	[-a|--allow user read|write|all topic]
+# 	[-a|--allow user|cert.pem producer|consumer|read|write|all topic]
 # 	[-r|--remove user [read|write|all] topic]
 #
 
+function usage()
+{
+    echo "kfeed [-c|--create-topic topic] "
+    echo "      [-l|--list-topics] "
+	echo "      [-u|--update-advertised-listeners] "
+ 	echo "      [-a|--allow user|cert.pem producer|consumer|read|write|all topic] "
+ 	echo "      [-r|--remove user|cert.pem producer|consumer|read|write|all topic] "
+    echo "      [-d|--delete-topic topic] "
+}
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 if [[ $# -lt 1 ]]; then
-    echo "Usage: kfeed [-c topic] [-l] [-u] [-a user read|write|all topic]"
+    usage
     exit 1
 fi
 
@@ -56,18 +65,27 @@ function create_topic()
 
 function allow_user()
 {
+    op_command="--operation "
     case "$operation" in 
-        read)
+        r|read)
             op="Read"
             ;;
-        write)
+        w|write)
             op="Write"
             ;;
-        all)
+        a|all)
             op="All"
             ;;
+        p|producer)
+            op=""
+            op_command="--producer"
+            ;;
+        c|consumer)
+            op=""
+            op_command="--consumer "
+            ;;
         *)
-            echo "Operation should be read, write or all"
+            echo "Operation should be consumer, producer, read, write or all"
             exit 1
             ;;
     esac        
@@ -79,16 +97,22 @@ function allow_user()
         echo "topic is missing"
         exit 1
     fi
+    if [ -f "$user" ] && [ `file $user | cut -d' ' -f 2` = "PEM" ]
+    then 
+        # Find the Owner fields in the certificate file
+        owner=`keytool -printcert -file $user | grep Owner | head -n 1 | cut -d':' -f 2 | tr -d ' '`
+        user=$owner
+    fi
     echo "Allow $user $op $topic"
     group=""
-    if [ "$op" = "Read" ]; then
+    if [ "$op" = "Read" ] || [ "$op_command" = "--consumer " ]; then
         group="--group=*"
     fi
     $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:$user" \
-        --operation $op $group --topic $topic 
+        $op_command $op $group --topic $topic 
 }
 
-VALID_ARGS=$(getopt -o hlc:ua: --long allow:,list-topics,create-topic:,update-advertised-listeners -- "$@")
+VALID_ARGS=$(getopt -o a:hlc:u --long allow:,help,list-topics,create-topic:,update-advertised-listeners -- "$@")
 eval set -- "$VALID_ARGS"
 while [ : ]; do
     case "$1" in
@@ -114,7 +138,7 @@ while [ : ]; do
             ;;
 
         -h|--help)
-            echo $USAGE
+            usage
             exit 0
             ;;
 
