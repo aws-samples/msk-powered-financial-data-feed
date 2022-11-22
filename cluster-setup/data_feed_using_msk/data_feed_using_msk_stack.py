@@ -22,6 +22,7 @@ class DataFeedUsingMskStack(Stack):
         vpc = ec2.Vpc(self, 'my-msk-vpc',
             cidr = vpc_cidr,
             nat_gateways = 0,
+            #availability_zones=[os.environ["CDK_DEFAULT_REGION"]+"a",os.environ["CDK_DEFAULT_REGION"]+"b",os.environ["CDK_DEFAULT_REGION"]+"c"]
             subnet_configuration=[
                 ec2.SubnetConfiguration(name="public",cidr_mask=24,subnet_type=ec2.SubnetType.PUBLIC)
             ]
@@ -36,6 +37,7 @@ class DataFeedUsingMskStack(Stack):
         )
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "Allow access to private TLS port from within the VPC")
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(2181), "Allow access to Zookeeper port from within the VPC")
+        msk_cluster_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(2182), "Allow access to Zookeeper TLS port from within the VPC")
         msk_cluster_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(9194), "Allow access to public TLS port from anywhere")
 
         # Create the configuration resource for the cluster
@@ -96,7 +98,14 @@ class DataFeedUsingMskStack(Stack):
             security_group = provider_instance_security_group,
             vpc_subnets=ec2.SubnetSelection(subnet_type = ec2.SubnetType.PUBLIC),
             vpc = vpc,
-            key_name = os.environ["EC2_KEY_PAIR"]
+            key_name = os.environ["EC2_KEY_PAIR"],
+        )
+
+        instance.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=["acm-pca:ListCertificateAuthorities", "acm-pca:IssueCertificate", "acm-pca:GetCertificate"],
+                resources=["*"]
+            )
         )
 
         user_data_path = os.path.join(dirname, "user-data.sh")

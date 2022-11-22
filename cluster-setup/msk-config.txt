@@ -1,2 +1,0 @@
-allow.everyone.if.no.acl.found = false
-

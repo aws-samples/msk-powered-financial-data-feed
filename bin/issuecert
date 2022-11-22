@@ -19,7 +19,12 @@ if [ ! -f "$csr_file" ]; then
     exit 1
 fi
 
-pca_arn=`aws acm-pca list-certificate-authorities | grep Arn | cut -d "\"" -f 4`
+if [ -z "${ACM_PCA_ARN}" ]; then
+    pca_arn=`aws acm-pca list-certificate-authorities | grep Arn | cut -d "\"" -f 4`
+else
+  pca_arn="${ACM_PCA_ARN}"
+fi
+
 if [ -z $pca_arn ]; then
     echo "No Private Certificate Authorities found. Use ACM in your AWS console to create a PCA" 
     exit 1
