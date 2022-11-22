@@ -57,9 +57,6 @@ class DataFeedUsingMskStack(Stack):
                 instance_type="kafka.m5.large",
                 security_groups = [msk_cluster_security_group.security_group_id],
                 client_subnets=[ subnet.subnet_id for subnet in vpc.public_subnets],
-                connectivity_info=msk.CfnCluster.ConnectivityInfoProperty(
-                    public_access=msk.CfnCluster.PublicAccessProperty(type="SERVICE_PROVIDED_EIPS")
-                ),
             ),
             client_authentication = msk.CfnCluster.ClientAuthenticationProperty(
                 tls = msk.CfnCluster.TlsProperty(
