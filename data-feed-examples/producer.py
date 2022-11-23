@@ -1,5 +1,5 @@
 from kafka import KafkaProducer
-import json, os
+import json, os, sys
 
 #Import Bootstrap server from environment variable
 tlsbrokers = os.environ.get('TLSBROKERS')
@@ -19,9 +19,22 @@ producer = KafkaProducer(
     acks=(1) #Number of ACKs to wait on. (0= None, 1=Partition Leader, All= All Brokers with the partion)
 )
 
-#Message to send
-msg = {"hello":"world"}
+# Read lines of input from the terminal, and send them as messages 
 
-#Send message to Kafka Brokers
-producer.send('topic1', value=msg)
-producer.flush()
+print("Enter a message to send at the prompt. Type 'q' to quit"),
+sys.stdout.write("> ")
+sys.stdout.flush()
+
+for line in sys.stdin:
+    if line.rstrip() == 'q':
+        break
+
+    msg = {"Sending": line.rstrip()}
+
+    # Send message to Kafka Brokers
+    producer.send('topic3', value=msg)
+    producer.flush()
+    sys.stdout.write("> ")
+    sys.stdout.flush()
+
+
