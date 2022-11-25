@@ -6,8 +6,8 @@
 # 	[-c|--create-topic topic] 
 # 	[-l|--list-topics] 
 # 	[-u|--update-advertised-listeners]
-# 	[-a|--allow user|cert.pem producer|consumer|read|write|all topic]
-# 	[-r|--remove user|cert.pem producer|consumer|read|write|all topic]
+# 	[-a|--allow user|cert.pem producer|consumer|read|write|describe|all topic]
+# 	[-r|--remove user|cert.pem producer|consumer|read|write|describe|all topic]
 # 	[-d|--delete-topic topic]
 #
 
@@ -16,8 +16,8 @@ function usage()
     echo "kfeed [-c|--create-topic topic] "
     echo "      [-l|--list-topics] "
     echo "      [-u|--update-advertised-listeners] "
-    echo "      [-a|--allow user|cert.pem producer|consumer|read|write|all topic] "
-    echo "      [-r|--remove user|cert.pem producer|consumer|read|write|all topic] "
+    echo "      [-a|--allow user|cert.pem producer|consumer|read|write|describe|all topic] "
+    echo "      [-r|--remove user|cert.pem producer|consumer|read|write|describe|all topic] "
     echo "      [-d|--delete-topic topic] "
 }
 
@@ -80,6 +80,9 @@ function allow_user()
         w|write)
             op="Write"
             ;;
+        d|describe)
+            op="DescribeConfigs"
+            ;;
         a|all)
             op="All"
             ;;
@@ -112,7 +115,7 @@ function allow_user()
     fi
     echo "Allow $user $op $topic"
     group=""
-    if [ "$op" = "Read" ] || [ "$op_command" = "--consumer " ]; then
+    if [ "$op" = "Read" ] || [ "$op_command" = "--consumer " ] || [ "$op" = "All" ]; then
         group="--group=*"
     fi
     $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:$user" \
