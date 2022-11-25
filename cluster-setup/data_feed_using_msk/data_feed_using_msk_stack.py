@@ -57,9 +57,15 @@ class DataFeedUsingMskStack(Stack):
                 instance_type="kafka.m5.large",
                 security_groups = [msk_cluster_security_group.security_group_id],
                 client_subnets=[ subnet.subnet_id for subnet in vpc.public_subnets],
-                connectivity_info=msk.CfnCluster.ConnectivityInfoProperty(
-                    public_access=msk.CfnCluster.PublicAccessProperty(type="SERVICE_PROVIDED_EIPS")
-                ),
+                #
+                # After deploying this CDK stack for the first time, uncomment the 3 lines 
+                # of code below and re-deploy to allow public access to the cluster. 
+                # For security reasons, MSK does not allow public access to be enabled on the 
+                # initial deployment.
+                #
+                # connectivity_info=msk.CfnCluster.ConnectivityInfoProperty(
+                #   public_access=msk.CfnCluster.PublicAccessProperty(type="SERVICE_PROVIDED_EIPS")
+                # ),
             ),
             client_authentication = msk.CfnCluster.ClientAuthenticationProperty(
                 tls = msk.CfnCluster.TlsProperty(

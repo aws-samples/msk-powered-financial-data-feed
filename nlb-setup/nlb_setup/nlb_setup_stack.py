@@ -45,26 +45,6 @@ class NlbSetupStack(Stack):
                 broker_ips.append(ip)
         
 
-        # Get the list of Zookeeper nodes from the env variable
-        zk_node_string = os.environ["ZKNODES"]
-
-        zk_nodes = zk_node_string.split(',')
-        zk_node_names = []
-
-        for url in zk_nodes:
-            name = url.split(':')[0]
-            zk_node_names.append(name)
-
-        # Get the IP addresses of the Zookeeper nodes by resolving their DNS names
-        zk_node_ips = []
-        for name in zk_node_names:
-            result = dns.resolver.query(name, 'A')
-            for ipval in result:
-                ip = ipval.to_text()
-                zk_node_ips.append(ip)
-                # print("ZK node: ", name, "IP: ", ip)
-
-
         # Create the target groups for the NLBs
         advertised_listeners_starting_port = 8441
         tls_port = 9094
@@ -99,25 +79,3 @@ class NlbSetupStack(Stack):
             acceptance_required=False
         )
 
-        # Create a Route 53 Private Hosted Zone
-
-        region = os.getenv('CDK_DEFAULT_REGION')
-        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=msk_vpc)
-        
-        # Alias the broker names to the NLB name
-        for name in broker_names:
-            kafka_index = name.find("kafka")
-            route53.ARecord(self, "ARecord"+name[0:3],
-                    record_name=name[0:kafka_index-1],
-                    zone=zone,
-                    target=route53.RecordTarget.from_alias(r53_targets.LoadBalancerTarget(nlb))
-            )
-
-        # Add the Zookeeper node A records 
-        for name, ip in zip(zk_node_names, zk_node_ips):
-            kafka_index = name.find("kafka")
-            route53.ARecord(self, "ARecord"+name[0:3],
-                    record_name=name[0:kafka_index-1],
-                    zone=zone,
-                    target=route53.RecordTarget.from_values(ip)
-            )
