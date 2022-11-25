@@ -7,7 +7,7 @@ You will need an existing Amazon Linux EC2  instance to deploy the cluster. This
 
 ## Deployment steps
 
-1. [Creating a Private Cerificate Authority](#creating-a-private-certificate0authority)
+1. [Creating a Private Certificate Authority](#creating-a-private-certificate-authority)
 2. [Deploying the MSK Cluster](#deploying-the-msk-cluster)
 3. [Setting up the provider instance](#setting-up-the-provider-instance)
 4. [Deploying the NLB and VPC endpoint service](#deploying-the-nlb-and-vpc-endpoint-service)
@@ -18,43 +18,55 @@ You will need an existing Amazon Linux EC2  instance to deploy the cluster. This
 
 
 ### Creating a Private Certificate Authority 
-The Kafka provider and client will authenticate each other using mutual TLS (mTLS), so you  need to use AWS Certificate Manager to create a Private Certificate Authority and root certificate as follows. 
+The Kafka provider and client will authenticate each other using mutual TLS (mTLS), so you  need to use AWS Certificate Manager to create a Private Certificate Authority and root certificate as follows.
 
-1. Log in to your [AWS Certificate Manager](https://console.aws.amazon.com/acm) console and click on **AWS Private CA**. 
-2. Click  **Create a Private CA** , select CA type **Root** and fill in your organization details. Leave the other options as default and click **Create CA**. 
-3. Once the CA becomes active, select **Actions -> Install CA certificate** on the CA's details page to install the root certificate. 
+1. Log in to your [AWS Certificate Manager](https://console.aws.amazon.com/acm) console and click on **AWS Private CA**.
+2. Click  **Create a Private CA** , select CA type **Root** and fill in your organization details. Leave the other options as default and click **Create CA**.
+3. Once the CA becomes active, select **Actions -> Install CA certificate** on the CA's details page to install the root certificate.
 
 
 ### Deploying the MSK Cluster
 These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
 
-1. Log in to your deployment EC2 instance using ssh, and clone this repo. 
-```
-git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git msk-feed
-cd msk-feed
-export PATH=-$PATH:$HOME/msk-feed/bin
-``` 
-2. Add the following shell environment variables to your .bashrc file
-```
-echo "export CDK_DEFAULT_ACCOUNT=123456789012" >> ~/.bashrc
-echo "export CDK_DEFAULT_REGION="us-east-1" >> ~/.bashrc
-echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> env-vars.sh >> ~/.bashrc
-echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
-```
-Then update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page. Then run : ``` source ~/.bashrc``` 
+1. Log in to your deployment EC2 instance using ssh, and clone this repo.
+
+    ```
+    git clone https://github.com/aws-samples/msk-powered-financial-data-feed.git msk-feed
+    cd msk-feed
+    export PATH=-$PATH:$HOME/msk-feed/bin
+    ```
+
+2. Add the following shell environment variables to your .bashrc file. Update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page.
+
+    ```
+    echo "export CDK_DEFAULT_ACCOUNT=123456789012" >> ~/.bashrc
+    echo "export CDK_DEFAULT_REGION="us-east-1" >> ~/.bashrc
+    echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> ~/.bashrc
+    echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
+    echo "export MSK_PUBLIC='FALSE'" >> ~/.bashrc
+
+    source ~/.bashrc
+    ```
 
 3. Deploy the MSK cluster and other required infrastructure using the following cdk commands. 
-```
-cd cluster-setup
-cdk bootstrap
-cdk synth
-cdk deploy
-```
 
-4. Select your [MSK cluster](https://console.aws.com/msk) in the AWS console after it becomes Active and copy its ARN to your clipboard. Then enable both public and private access by running
-```
-    msk-public-access <your MSK ARN>
-```
+    ```
+    cd cluster-setup
+    cdk bootstrap
+    cdk synth
+    cdk deploy
+    ```
+
+**NOTE:** This step can take up to 45 minutes.
+
+4. After the app is deployed you will notice that your MSK Cluster does not have Public connectivity. For security reasons MSK does not allow to create a cluster with public access enabled. To enable public access set the MSK_PUBLIC environment variable to TRUE after the cluster is deployed. And redeploy CDK Stack.
+
+    ```
+    echo "export MSK_PUBLIC='TRUE'" >> ~/.bashrc
+    source ~/.bashrc
+
+    cdk deploy
+    ```
 
 ### Setting up the provider instance
 1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
