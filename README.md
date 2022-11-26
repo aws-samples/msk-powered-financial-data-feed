@@ -216,40 +216,32 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 
 ### 6. Running the provider and consumer applications
 
-1. In both the client and provider instances, install the required Python modules by running the following commands.
-
-    ```
-    cd data-feed-examples
-    alias python=python3
-    python -m pip install -r requirements.txt
-    ```
-
-2. In your client instance, run the test consumer application.
+1. In your client instance, run the test consumer application.
 
     ```
     python consumer.py
     ```
 
-3. In your provider instance, run the test producer application.
+2. In your provider instance, run the test producer application.
 
     ```
     python producer.py 
     ```
 
-4. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
+3. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
 
-5. Sign up for the Alpaca free tier API.
+4. Sign up for the Alpaca free tier API.
 
-6. Generate an **API KEY ID** and a **Secret Key**
+5. Generate an **API KEY ID** and a **Secret Key**
 
-7. Export them to the following environment variables.
+6. Export them to the following environment variables.
 
     ```
     export APCA_API_KEY_ID="<API KEY ID>"
     export APCA_API_SECRET_KEY="<Secret Key>"
     ```
 
-8. Log in using ssh to the provider instance and create the following topics. 
+7. Log in using ssh to the provider instance and create the following topics. 
 
     ```
     kfeed -c trade 
@@ -258,7 +250,7 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     kfeed -l 
     ```
 
-9. Add the necessary ACLs to give the producer and consumer access to the topics.
+8. Add the necessary ACLs to give the producer and consumer access to the topics.
 
     ```
     kfeed -a client_cert.pem p trade
@@ -269,13 +261,13 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     kfeed -a consumer_cert.pem c crypto_trade
     ```
 
-10.  Run the producer in the ```data-feed-examples``` folder.
+9.   Run the producer in the ```data-feed-examples``` folder.
 
     ```
     python3 alpaca-producer.py
     ```
 
-11.  In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
+10.  In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
 
     ```
     python3 alpaca-consumer.py
