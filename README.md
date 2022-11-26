@@ -72,6 +72,10 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
 
     ```
+    echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
+    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
+    source ~/.bashrc
+
     export PATH=$PATH:$HOME/msk-feed/bin
     ```
 
@@ -80,10 +84,6 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 3. Run ```get_nodes.py``` python script to capture Zookeeper and Bootstrap nodes and export then to environment variables. First you will need export a few variables.
 
     ```
-    echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
-    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
-    source ~/.bashrc
-
     python3 msk-feed/bin/get_nodes.py
     
     source ~/.bashrc 
@@ -240,14 +240,14 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 
 5. Generate an **API KEY ID** and a **Secret Key**
 
-6. Export them to the following environment variables.
+6. Log in using ssh to the **provider instance**  and export Alpaca credentials to the following environment variables.
 
     ```
     export APCA_API_KEY_ID="<API KEY ID>"
     export APCA_API_SECRET_KEY="<Secret Key>"
     ```
 
-7. Log in using ssh to the **provider instance** and create the following topics.
+7. On the **provider instance**, create the following topics.
 
     ```
     kfeed -c trade 
@@ -256,7 +256,7 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     kfeed -l 
     ```
 
-8. Add the necessary ACLs to give the producer and consumer access to the topics.
+8. On the **provider instance**, add the necessary ACLs to give the producer and consumer access to the topics.
 
     ```
     kfeed -a client_cert.pem p trade
@@ -267,7 +267,7 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     kfeed -a consumer_cert.pem c crypto_trade
     ```
 
-9. Run the producer in the ```data-feed-examples``` folder.
+9. On the **provider instance**, run the producer in the ```~/msk-feed/data-feed-examples``` folder.
 
     ```
     python3 alpaca-producer.py
@@ -278,6 +278,8 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     ```
     python3 alpaca-consumer.py
     ```
+
+You should see the messages in the screen.
 
 ## Contributors
 
