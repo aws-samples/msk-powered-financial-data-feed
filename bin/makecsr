@@ -32,17 +32,17 @@ keytool -keystore $keystore_file -certreq -file raw-client-cert.csr -alias kafka
 sed 's/NEW //' raw-client-cert.csr > $csr_file
 
 echo -e "\nCreating Private Key file."
-keytool -importkeystore -srckeystore $keystore_file -destkeystore client.p12 -srcstoretype jks -deststoretype pkcs12
+keytool -importkeystore -srckeystore $keystore_file -destkeystore client.p12 -srcstoretype jks -deststoretype pkcs12 -deststorepass $keypass -srcstorepass $keypass
 
 echo -e "\nExporting Private Key to pem file."
-openssl pkcs12 -in client.p12 -out $private_key_file -password pass:$keypass
+openssl pkcs12 -in client.p12 -out $private_key_file -passin pass:$keypass -passout pass:$keypass
 
 echo -e "\nCreating Truststore files."
 cp $cacerts_file $truststore_jks
-keytool -importkeystore -srckeystore  $truststore_jks -srcstorepass changeit -destkeystore $truststore_pkcs -srcstoretype jks -deststoretype pkcs12
+keytool -importkeystore -srckeystore  $truststore_jks -srcstorepass changeit -destkeystore $truststore_pkcs -srcstoretype jks -deststoretype pkcs12 -deststorepass $keypass
 
 echo -e "\nExporting Truststore to pem file."
-openssl pkcs12 -in $truststore_pkcs -out truststore.pem
+openssl pkcs12 -in $truststore_pkcs -out truststore.pem -passin pass:$keypass
 rm -f $truststore_pkcs
 
 # Deleting unnecessary files
