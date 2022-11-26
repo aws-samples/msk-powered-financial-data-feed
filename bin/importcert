@@ -30,3 +30,4 @@ echo "ssl.keystore.location=/home/ec2-user/kafka/kafka.client.keystore.jks" >> c
 echo "ssl.keystore.password=$keypass" >> client.properties
 echo "ssl.key.password=$keypass" >> client.properties
 
+

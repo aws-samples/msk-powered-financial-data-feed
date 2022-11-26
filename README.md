@@ -78,7 +78,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 
 2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed.
 
-3. Run ```get_nodes.py``` python script to capture Zookeeper Nodes and Bootstrap nodes and make then environment variables.
+3. Run ```get_nodes.py``` python script to capture Zookeeper and Bootstrap nodes and export then to environment variables.
 
     ```
     python3 msk-feed/bin/get_node.py
@@ -86,16 +86,16 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     source ~/.bashrc 
     ```
 
-You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**.
+**NOTE:**  You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**.
 
-4. In your ```kafka``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate. Make sure you type the **-k** option on the **makecsr** command below.
+4. In your ```certs``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate.
 
     ```
-    cd kafka
-    makecsr -k
+    cd certs
+    makecsr
     ```
 
-Enter your orgranization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called client_cert.csr.
+Enter your organization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called ```client_cert.csr```.
 
 5. Sign the CSR and issue the certificate by running
 
@@ -103,7 +103,7 @@ Enter your orgranization's domain name when asked for first and last name and en
     issuecert client_cert.csr
     ```
 
-This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```. 
+This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```.
 
 6. Import the certificate into your keystore
 
@@ -111,13 +111,34 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
     importcert client_cert.pem
     ```
 
-7. Update the advertised listener ports on the MSK cluster
+7. You should have in your ```certs``` directory the following files.
+   
+* ```client_cert.csr``` - Certificate signing request file
+* ```client_cert.pem``` - Client certificate file
+* ```private_key.pem``` - Private key for mutual TLS
+* ```truststore.pem``` - Store of external certificates that are trusted
+* ```kafka.client.keystore.jks``` - Java Key Store file that contains Client certificate, private key and trust chain
+* ```kafka.client.truststore.jks``` - Java Key Store file that contains trusted public CAs
+* ```client.properties``` - Properties file that contains Kafka tools client configuration for TLS connection
+* client.p12 - delete
+* truststore.p12 - delete
+
+
+1. Update the advertised listener ports on the MSK cluster
 
     ```
     kfeed -u
     ```
 
 The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
+
+
+
+1. Your provider application will publish data _directly_ to the MSK cluster's public endpoint. You will therefore need to change TLSBROKERS to the **public** endpoint of the cluster. Edit your .bashrc file and update TLSBROKERS by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console. 
+```
+    export TLSBROKERS=<public endpoint of Bootstrap servers>
+```
+
 
 
 ### Deploying the Kafka client instance
@@ -142,30 +163,6 @@ echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
 ```
 Run ```source ~/.bashrc``` after updating the value.
 
-### Finishing the setup for the provider instance
-The steps below will create a certificate to enable the provider application to produce data for the cluster.
-
-
-1. Go to your provider instance, and create a private key and certificate signing request (CSR) file for the provider application. 
-```
-    cd msk-feed/data-feed-examples 
-    makecsr
-```
-Enter your organization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
-* private_key.pem - Private key for mutual TLS
-* client_cert.csr - Certificate signing request file
-* truststore.pem - Store of external certificates that are trusted
-
-2. Sign and issue the certificate file by running
-```
-    issuecert client_cert.csr
-```
-This uses your ACM Private Certificate Authority to sign and generate the certificate file, called ```client_cert.pem```. You can use this same ```issuecert``` tool to sign and issue certificates for your clients who will consume the data feed.
-
-3. Your provider application will publish data _directly_ to the MSK cluster's public endpoint. You will therefore need to change TLSBROKERS to the **public** endpoint of the cluster. Edit your .bashrc file and update TLSBROKERS by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console. 
-```
-    export TLSBROKERS=<public endpoint of Bootstrap servers>
-```
 
 ### Finishing the client instance setup
 The steps below will finish setting up the client instance for private access to the cluster via PrivateLink. The client will need to obtain a signed certificate from the provider.
