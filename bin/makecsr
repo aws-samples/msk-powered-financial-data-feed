@@ -21,10 +21,13 @@ then
         exit 1
 fi
 
+read -s -p "Enter your password for all key files: " keypass
+
 echo -e "\nCreating Keystore files."
-keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12
+keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12  -keypass $keypass
 
 echo -e "\nCreating Certificate Sign Request files."
+echo -e "\nEnter the passwaord you used for your Keystore (step above)."
 keytool -keystore $keystore_file -certreq -file raw-client-cert.csr -alias kafka-key
 sed 's/NEW //' raw-client-cert.csr > $csr_file
 

@@ -18,3 +18,6 @@ f.write("export TLS_ZKNODES="+json.dumps(response.get("ClusterInfo").get("Provis
 f.write("export TLSBROKERS="+json.dumps(response1.get("BootstrapBrokerStringTls"), indent=2, default=str)+"\n")
 f.write("export PUBLIC_TLSBROKERS="+json.dumps(response1.get("BootstrapBrokerStringPublicTls"), indent=2, default=str)+"\n")
 f.close()
+
+print("Bootstrap Nodes added to ~/.bashrc file. Please add them to your Environment variables.\n\n")
+print("source ~/.bashrc")

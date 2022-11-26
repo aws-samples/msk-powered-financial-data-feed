@@ -8,6 +8,8 @@ yum -y install openssl-devel bzip2-devel zlib-devel libffi-devel ncurses-devel s
 yum -y install java-1.8.0 git jq wget python3-pip
 
 mkdir /home/ec2-user/certs
+chown -R ec2-user.ec2-user /home/ec2-user/certs
+
 
 wget https://archive.apache.org/dist/kafka/2.6.2/kafka_2.12-2.6.2.tgz
 tar -xzf kafka_2.12-2.6.2.tgz
