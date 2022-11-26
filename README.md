@@ -3,21 +3,20 @@
 This application demonstrates how to publish a real-time financial data feed as a service on AWS. It contains the code for a data provider to send streaming data to its clients via an Amazon MSK cluster. Clients can consume the data using a Kafka client SDK. If the client application is in another AWS account, it can connect to the provider's feed directly through AWS PrivateLink. The client can subscribe to a Kafka topic (e.g., "stock-quotes") to consume the data that is of interest. The client and provider authenticate each other using mutual TLS.
 
 ## Pre-requisites
-You will need an existing Amazon Linux EC2  instance to deploy the cluster. This deployment instance should have git, jq, Python 3.7, and the AWS CLI **v2** installed. To install AWS CLI v2, see [Installing the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the deployment instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html). 
+You will need an existing Amazon Linux EC2  instance to deploy the cluster. This deployment instance should have git, jq, Python 3.7, and the AWS CLI **v2** installed. To install AWS CLI v2, see [Installing the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the deployment instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html).
 
 ## Deployment steps
 
-1. [Creating a Private Certificate Authority](#creating-a-private-certificate-authority)
-2. [Deploying the MSK Cluster](#deploying-the-msk-cluster)
-3. [Setting up the provider instance](#setting-up-the-provider-instance)
-4. [Deploying the NLB and VPC endpoint service](#deploying-the-nlb-and-vpc-endpoint-service)
-5. [Deploying the Kafka client instance](#deploying-the-kafka-client-instance)
-6. [Finishing the setup for the provider instance](#finishing-the-setup-for-the-provider-instance)
-7. [Finishing the client instance setup](#finishing-the-client-instance-setup)
-8. [Running the provider and consumer applications](#running-the-provider-and-consumer-applications)
+1. [Creating a Private Certificate Authority](#1-creating-a-private-certificate-authority)
+2. [Deploying the MSK Cluster](#2-deploying-the-msk-cluster)
+3. [Setting up the provider instance](#3-setting-up-the-provider-instance)
+4. [Deploying the Kafka client instance](#deploying-the-kafka-client-instance)
+5. [Finishing the setup for the provider instance](#finishing-the-setup-for-the-provider-instance)
+6. [Finishing the client instance setup](#finishing-the-client-instance-setup)
+7. [Running the provider and consumer applications](#running-the-provider-and-consumer-applications)
 
+### 1. Creating a Private Certificate Authority
 
-### Creating a Private Certificate Authority 
 The Kafka provider and client will authenticate each other using mutual TLS (mTLS), so you  need to use AWS Certificate Manager to create a Private Certificate Authority and root certificate as follows.
 
 1. Log in to your [AWS Certificate Manager](https://console.aws.amazon.com/acm) console and click on **AWS Private CA**.
@@ -25,7 +24,8 @@ The Kafka provider and client will authenticate each other using mutual TLS (mTL
 3. Once the CA becomes active, select **Actions -> Install CA certificate** on the CA's details page to install the root certificate.
 
 
-### Deploying the MSK Cluster
+### 2. Deploying the MSK Cluster
+
 These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
 
 1. Log in to your deployment EC2 instance using ssh, and clone this repo.
@@ -68,64 +68,57 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     cdk deploy
     ```
 
-### Setting up the provider instance
+### 3. Setting up the provider instance
+
 1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
 
-```
-git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git msk-feed
-export PATH=$PATH:$HOME/msk-feed/bin 
-```
+    ```
+    export PATH=$PATH:$HOME/msk-feed/bin 
+    ```
 
-2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed. 
+2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed.
 
-3. Set up some environment variables in your .bashrc file. 
-```
-echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
-echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
-```
-You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**. Then  run ```source ~/.bashrc```
+3. Run ```get_nodes.py``` python script to capture Zookeeper Nodes and Bootstrap nodes and make then environment variables.
+
+    ```
+    python3 msk-feed/bin/get_node.py
+    
+    source ~/.bashrc 
+    ```
+
+You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. Use the **Plaintext** Zookeeper connection string. For TLSBROKERS, use the **Private endpoint**.
 
 4. In your ```kafka``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate. Make sure you type the **-k** option on the **makecsr** command below.
-```
+
+    ```
     cd kafka
     makecsr -k
-```
+    ```
+
 Enter your orgranization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called client_cert.csr.
 
 5. Sign the CSR and issue the certificate by running
-```
+
+    ```
     issuecert client_cert.csr
-```
+    ```
+
 This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```. 
 
 6. Import the certificate into your keystore
-```
+
+    ```
     importcert client_cert.pem
-```
+    ```
 
 7. Update the advertised listener ports on the MSK cluster
-```
+
+    ```
     kfeed -u
-```
+    ```
+
 The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
 
-### Deploying the NLB and VPC endpoint service
-The steps below will create a private NLB plus a VPC endpoint service that allows the MSK cluster to be accessed via PrivateLink. 
-
-1. Go back to your deployment instance and add the following environment variable to your .bashrc file.
-```
-   echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
-   echo "export ZKNODES='Your Zookeeper connection string'" >> ~/.bashrc 
-   echo "export MSK_VPC_ID='The VPC ID of the MSK cluster'" >> ~/.bashrc
-```
-Make sure you use the MSK cluster's **private endpoint** for the TLSBROKERS string, not the public one. Again, use the **Plaintext** Zookeeper connection string for ZKNODES. You can find both these strings when you click the **View client information** button in your MSK cluster details page. You can find the ID of the VPC where the MSK cluster was deployed in your AWS VPC console.  Then run ```source ~/.bashrc```
-
-2.  Type the following commands to deploy the NLB CDK stack.
-```
-cd ../nlb-setup
-cdk synth
-cdk deploy
-```
 
 ### Deploying the Kafka client instance
 The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. These steps will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
