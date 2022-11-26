@@ -89,7 +89,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     source ~/.bashrc 
     ```
 
-**NOTE:**  You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. ```ZKNODES``` is the **Plaintext** Zookeeper connection string and ```TLSBROKERS``` is the **Private endpoint**.
+**NOTE:**  *You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. ```ZKNODES``` is the **Plaintext** Zookeeper connection string and ```TLSBROKERS``` is the **Private endpoint**.*
 
 4. In your ```certs``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate.
 
@@ -108,7 +108,7 @@ Enter your organization's domain name when asked for first and last name and ent
 
 This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```. Make sure you have ```ACM_PCA_ARN``` environment variable set.
 
-6. Import the certificate into your keystore
+6. Import the certificate into your keystore.
 
     ```
     importcert client_cert.pem
@@ -132,7 +132,7 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
 
 The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
 
-9. Your provider application will publish data _directly_ to the MSK cluster's public endpoint. You will therefore need to change TLSBROKERS to the **public** endpoint of the cluster. Edit your .bashrc file and update TLSBROKERS by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console. 
+9. Your provider application will publish data *directly* to the MSK cluster's public endpoint. You will therefore need to change ```TLSBROKERS``` to the **public** endpoint of the cluster. Edit your .bashrc file and update ```TLSBROKERS``` by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console.
 
     ```
     export TLSBROKERS=<public endpoint of Bootstrap servers>
@@ -182,13 +182,15 @@ The steps below will finish setting up the client instance for private access to
 
 Enter the organization details for the client when prompted.
 
-2. Copy the ```client_cert.csr``` file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application. (In a real-world scenario, the client wopuld upload the CSR file to the provider's Website for signing.)
+2. Copy the ```client_cert.csr``` file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application.
 
     ```
     issuecert client_cert.csr
     ```
 
-Copy the generated client_cert.pem file back to the client instance, and put it in the ```data-feed-examples``` folder. In your provider instance, you can rename this to consumer_cert,pem and put it in a separate folder.
+**NOTE:** *In a real-world scenario, the client would upload the CSR file to the provider's Website for signing.*
+
+Copy the generated ```client_cert.pem``` file back to the client instance, and put it in the ```certs``` folder. In your provider instance, you can rename this to consumer_cert.pem and put it in a separate folder.
 
 3. On your provider instance, create a test Kafka topic named topic1 using the **kfeed** command.
 
@@ -212,21 +214,25 @@ The above can be abbreviated as ```kfeed -a client_cert.pem p topic1``` Note tha
     kfeed --allow consumer_cert.pem consumer topic1
     ```
 
-The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1``` 
+The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 
 ### 6. Running the provider and consumer applications
 
-1. In your client instance, run the test consumer application.
+#### Testing sample producer and consumer python clients
+
+1. In your **client instance**, run the test consumer application.
 
     ```
     python consumer.py
     ```
 
-2. In your provider instance, run the test producer application.
+2. In your **provider instance**, run the test producer application.
 
     ```
     python producer.py 
     ```
+
+#### Testing Alpaca producer and consumer python clients
 
 3. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
 
@@ -241,7 +247,7 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     export APCA_API_SECRET_KEY="<Secret Key>"
     ```
 
-7. Log in using ssh to the provider instance and create the following topics. 
+7. Log in using ssh to the **provider instance** and create the following topics.
 
     ```
     kfeed -c trade 
@@ -267,7 +273,7 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     python3 alpaca-producer.py
     ```
 
-10. In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
+10. In a separate terminal window, ssh to the **client instance** and run the consumer in the ```data-feed-examples``` folder
 
     ```
     python3 alpaca-consumer.py
