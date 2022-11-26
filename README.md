@@ -261,13 +261,13 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
     kfeed -a consumer_cert.pem c crypto_trade
     ```
 
-9.   Run the producer in the ```data-feed-examples``` folder.
+9. Run the producer in the ```data-feed-examples``` folder.
 
     ```
     python3 alpaca-producer.py
     ```
 
-10.  In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
+10. In a separate terminal window, ssh to the client instance and run the consumer in the ```data-feed-examples``` folder
 
     ```
     python3 alpaca-consumer.py
