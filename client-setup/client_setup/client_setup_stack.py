@@ -10,7 +10,9 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-dirname = os.path.dirname(__file__) 
+#SETUP DEPLOYMENT VARIABLES
+dirname = os.path.dirname(__file__)
+app_region = os.environ["CDK_DEFAULT_REGION"]
 
 class ClientSetupStack(Stack):
 
@@ -60,9 +62,7 @@ class ClientSetupStack(Stack):
         )
 
         # Create a Route 53 Private Hosted Zone
-
-        region = os.getenv('CDK_DEFAULT_REGION')
-        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+region+".amazonaws.com", vpc=vpc)
+        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+app_region+".amazonaws.com", vpc=vpc)
 
         # Alias the broker names to the NLB name
         for name in broker_names:
@@ -74,8 +74,7 @@ class ClientSetupStack(Stack):
             )
 
 
-        # Create an EC2 instance in this same VPC to run the Kafka feed consumer app
-
+        # Create an EC2 instance in this  VPC to run the Kafka feed consumer app
         # AMI
         amzn_linux = ec2.MachineImage.latest_amazon_linux(
             generation=ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
@@ -93,18 +92,20 @@ class ClientSetupStack(Stack):
         )
         client_instance_security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(22), "allow ssh access from anywhere")
 
-        # Instance
+        # EC2 Instance BootStrap configuration  
+        user_data_path = os.path.join(dirname, "user-data.sh")
+        with open(user_data_path, encoding='utf-8') as f:
+            user_data = f.read()
+
+        # EC2 Instance definition
         instance = ec2.Instance(self, "msk-consumer-instance",
             instance_type = ec2.InstanceType("t3.small"),
             machine_image = amzn_linux,
             security_group = client_instance_security_group,
             vpc_subnets=ec2.SubnetSelection(subnet_type = ec2.SubnetType.PUBLIC),
             vpc = vpc,
-            key_name = os.environ["EC2_KEY_PAIR"]
-        )
+            key_name = os.environ["EC2_KEY_PAIR"],
+            user_data=ec2.UserData.custom(user_data),
 
-        user_data_path = os.path.join(dirname, "user-data.sh")
-        f = open(user_data_path, encoding='utf-8')
-        commands = f.read()
-        instance.add_user_data(commands)
+        )
 
