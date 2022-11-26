@@ -281,5 +281,6 @@ class DataFeedUsingMskStack(Stack):
 
         # Print all Outputs
         CfnOutput(self, "MskClusterArn", value=msk_cluster.attr_arn)
+        CfnOutput(self, "MskVPCEndpoint", value=vpce.vpc_endpoint_service_name)
         CfnOutput(self, "MskClusterPrivateTLSBrokers", value=private_tls_brokers)
         CfnOutput(self, "MskClusterZookeeper", value=ZN_nodes)

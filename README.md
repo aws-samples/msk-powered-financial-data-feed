@@ -94,7 +94,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 4. In your ```certs``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate.
 
     ```
-    cd certs
+    cd ~/certs
     makecsr
     ```
 
