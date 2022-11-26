@@ -120,11 +120,10 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
 * ```kafka.client.keystore.jks``` - Java Key Store file that contains Client certificate, private key and trust chain
 * ```kafka.client.truststore.jks``` - Java Key Store file that contains trusted public CAs
 * ```client.properties``` - Properties file that contains Kafka tools client configuration for TLS connection
-* client.p12 - delete
-* truststore.p12 - delete
 
 
-1. Update the advertised listener ports on the MSK cluster
+
+8. Update the advertised listener ports on the MSK cluster
 
     ```
     kfeed -u
@@ -132,13 +131,11 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
 
 The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
 
+9. Your provider application will publish data _directly_ to the MSK cluster's public endpoint. You will therefore need to change TLSBROKERS to the **public** endpoint of the cluster. Edit your .bashrc file and update TLSBROKERS by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console. 
 
-
-1. Your provider application will publish data _directly_ to the MSK cluster's public endpoint. You will therefore need to change TLSBROKERS to the **public** endpoint of the cluster. Edit your .bashrc file and update TLSBROKERS by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console. 
-```
+    ```
     export TLSBROKERS=<public endpoint of Bootstrap servers>
-```
-
+    ```
 
 
 ### Deploying the Kafka client instance

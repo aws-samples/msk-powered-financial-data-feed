@@ -21,12 +21,6 @@ then
         exit 1
 fi
 
-echo -e "\nCreating Truststore files."
-cp $cacerts_file $truststore_jks
-keytool -importkeystore -srckeystore  $truststore_jks -srcstorepass changeit -destkeystore $truststore_pkcs -srcstoretype jks -deststoretype pkcs12
-openssl pkcs12 -in $truststore_pkcs -out truststore.pem
-rm -f $truststore_pkcs
-
 echo -e "\nCreating Keystore files."
 keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12
 
@@ -37,6 +31,12 @@ sed 's/NEW //' raw-client-cert.csr > $csr_file
 echo -e "\nCreating Private Key file."
 keytool -importkeystore -srckeystore $keystore_file -destkeystore client.p12 -srcstoretype jks -deststoretype pkcs12
 openssl pkcs12 -in client.p12 -out $private_key_file
+
+echo -e "\nCreating Truststore files."
+cp $cacerts_file $truststore_jks
+keytool -importkeystore -srckeystore  $truststore_jks -srcstorepass changeit -destkeystore $truststore_pkcs -srcstoretype jks -deststoretype pkcs12
+openssl pkcs12 -in $truststore_pkcs -out truststore.pem
+rm -f $truststore_pkcs
 
 # Deleting unnecessary files
 rm -f raw-client-cert.csr

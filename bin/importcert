@@ -30,4 +30,12 @@ echo "ssl.keystore.location=/home/ec2-user/kafka/kafka.client.keystore.jks" >> c
 echo "ssl.keystore.password=$keypass" >> client.properties
 echo "ssl.key.password=$keypass" >> client.properties
 
+# Move files to Kafka folder
+cp /home/ec2-user/certs/client.properties /home/ec2-user/kafka/client.properties
+cp /home/ec2-user/certs/kafka.client.keystore.jks /home/ec2-user/kafka/kafka.client.keystore.jks
+cp /home/ec2-user/certs/kafka.client.truststore.jks /home/ec2-user/kafka/kafka.client.truststore.jks
 
+# Move files to Kafka folder
+cp /home/ec2-user/certs/client_cert.pem /home/ec2-user/msk-feed/data-feed-examples/client_cert.pem
+cp /home/ec2-user/certs/private_key.pem /home/ec2-user/msk-feed/data-feed-examples/private_key.pem
+cp /home/ec2-user/certs/truststore.pem /home/ec2-user/msk-feed/data-feed-examples/truststore.pem
