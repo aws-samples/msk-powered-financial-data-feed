@@ -1,12 +1,9 @@
 import os.path
-
-
 from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
     aws_route53_targets as r53_targets,
     aws_route53 as route53,
-    CfnOutput
 )
 from constructs import Construct
 
@@ -20,15 +17,10 @@ class ClientSetupStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Get list of MSK brokers in cluster from env variable
-        broker_string = os.environ["TLSBROKERS"]
-
-        brokers = broker_string.split(',')
-        broker_names = []
-
-        for url in brokers:
-            name = url.split(':')[0]
-            broker_names.append(name)
-
+        broker_list= os.environ["BROKERLIST"]
+        x = broker_list[0].split(".")
+        del x[0]
+        domain_name=".".join(x)
 
         # Create a client VPC with public subnets for the Kafka consumer
         vpc_cidr = '10.1.0.0/16'
@@ -41,8 +33,6 @@ class ClientSetupStack(Stack):
         )
 
         # Create a VPC endpoint for the MSK cluster endpoint service
-        vpc_endpoint_service = os.environ["MSK_VPC_ENDPOINT_SERVICE"]
-
         # Security group for the VPC endpoint
         vpc_endpoint_security_group = ec2.SecurityGroup(self, "msk-vpc-endpoint-security-group",
             vpc = vpc,
@@ -51,10 +41,13 @@ class ClientSetupStack(Stack):
             allow_all_outbound=True,
         )
         vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "All brokers")
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(8441), "Broker 1")
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(8442), "Broker 2")
-        vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(8443), "Broker 3")
-
+        node_number = len(broker_list)
+        i=0
+        while i <= node_number:
+            vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(int(i+8441)), "Broker "+str(i+1))
+       
+        # Deploy Interface VPC Endpoint
+        vpc_endpoint_service = os.environ["MSK_VPC_ENDPOINT_SERVICE"]
         msk_vpc_endpoint = ec2.InterfaceVpcEndpoint(self, "msk-vpc-endpoint",
             vpc=vpc,
             service=ec2.InterfaceVpcEndpointService(vpc_endpoint_service, 9094),
@@ -63,13 +56,13 @@ class ClientSetupStack(Stack):
         )
 
         # Create a Route 53 Private Hosted Zone
-        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name="kafka."+app_region+".amazonaws.com", vpc=vpc)
+        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name=domain_name, vpc=vpc)
 
         # Alias the broker names to the NLB name
-        for name in broker_names:
-            kafka_index = name.find("kafka")
-            route53.ARecord(self, "ARecord"+name[0:3],
-                    record_name=name[0:kafka_index-1],
+        for broker in broker_list:
+            x = broker.split(".")
+            route53.ARecord(self, "ARecord"+str(x[0]),
+                    record_name=x,
                     zone=zone,
                     target=route53.RecordTarget.from_alias(r53_targets.InterfaceVpcEndpointTarget(msk_vpc_endpoint))
             )

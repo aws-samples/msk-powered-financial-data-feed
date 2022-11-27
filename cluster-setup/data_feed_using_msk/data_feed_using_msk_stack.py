@@ -9,7 +9,7 @@ from aws_cdk import (
     custom_resources as cr,
     aws_elasticloadbalancingv2 as elbv2,
     aws_elasticloadbalancingv2_targets as target,
-    CfnOutput, Fn, Tags
+    CfnOutput, Tags
 )
 from constructs import Construct
 
@@ -215,7 +215,7 @@ class DataFeedUsingMskStack(Stack):
             allowed_principals=[iam.ArnPrincipal("*")],
             acceptance_required=False
         )
-        Tags.of(vpce).add("Name", "msk-vpc-endpoint-service")
+        Tags.of(vpce).add("application", "msk-feed")
         
 
         # START LOCAL ENVIRONMENT SETUP
@@ -283,6 +283,4 @@ class DataFeedUsingMskStack(Stack):
         CfnOutput(self, "MskClusterArn", value=msk_cluster.attr_arn)
         CfnOutput(self, "MskVPCEndpoint", value=vpce.vpc_endpoint_service_name)
         CfnOutput(self, "MskClusterPrivateTLSBrokers", value=private_tls_brokers)
-        CfnOutput(self, "MskClusterZookeeper", value=ZN_nodes)
-        CfnOutput(self, "MskClusterNumberOfNodes", value=describe_cluster.get_response_field('ClusterInfo.Provisioned.NumberOfBrokerNodes'))
-        
+        CfnOutput(self, "MskClusterZookeeper", value=ZN_nodes)        

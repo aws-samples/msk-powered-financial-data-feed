@@ -4,8 +4,6 @@ import os
 import aws_cdk as cdk
 
 from client_setup.client_setup_stack import ClientSetupStack
-from client_setup.describe_cluster_stack import DescribeCluster
-from client_setup.get_nodes_stack import GetNodes
 
 
 app_account=os.getenv('CDK_DEFAULT_ACCOUNT')

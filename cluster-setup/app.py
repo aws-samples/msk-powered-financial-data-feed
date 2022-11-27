@@ -24,5 +24,5 @@ DataFeedUsingMskStack(app, "DataFeedUsingMskStack",
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )
-
+#cdk.Tags.of(app).add("application", "msk-feed")
 app.synth()
