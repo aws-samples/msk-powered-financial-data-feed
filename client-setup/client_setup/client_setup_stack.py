@@ -1,4 +1,4 @@
-import os.path
+import os.path, json
 from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
@@ -17,7 +17,8 @@ class ClientSetupStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
 
         # Get list of MSK brokers in cluster from env variable
-        broker_list= os.environ["BROKERLIST"]
+        broker_list=[]
+        broker_list=json.loads(os.environ["BROKERLIST"])
         x = broker_list[0].split(".")
         del x[0]
         domain_name=".".join(x)
@@ -41,10 +42,11 @@ class ClientSetupStack(Stack):
             allow_all_outbound=True,
         )
         vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "All brokers")
-        node_number = len(broker_list)
         i=0
-        while i <= node_number:
+        while i <= len(broker_list):
+            #print(i)
             vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(int(i+8441)), "Broker "+str(i+1))
+            i=i+1
        
         # Deploy Interface VPC Endpoint
         vpc_endpoint_service = os.environ["MSK_VPC_ENDPOINT_SERVICE"]
@@ -61,8 +63,8 @@ class ClientSetupStack(Stack):
         # Alias the broker names to the NLB name
         for broker in broker_list:
             x = broker.split(".")
-            route53.ARecord(self, "ARecord"+str(x[0]),
-                    record_name=x,
+            route53.ARecord(self, "ARecord_"+str(x[0]),
+                    record_name=x[0],
                     zone=zone,
                     target=route53.RecordTarget.from_alias(r53_targets.InterfaceVpcEndpointTarget(msk_vpc_endpoint))
             )

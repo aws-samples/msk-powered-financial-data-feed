@@ -11,7 +11,7 @@ This document describes the steps that you need to setup TLS for the following c
 ```
     makecsr
 ```
-Enter your orgranization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
+Enter your organization details for the CSR. Then make up a password for the destination keystore when prompted. Enter that same password when prompted for the Import password. You will now have the following files: 
 * private_key.pem - Private key for mutual TLS
 * client_cert.csr - Certificate signing request file
 * truststore.pem - Store of external certificates that are trusted
