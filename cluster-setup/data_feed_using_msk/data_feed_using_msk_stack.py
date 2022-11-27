@@ -284,3 +284,5 @@ class DataFeedUsingMskStack(Stack):
         CfnOutput(self, "MskVPCEndpoint", value=vpce.vpc_endpoint_service_name)
         CfnOutput(self, "MskClusterPrivateTLSBrokers", value=private_tls_brokers)
         CfnOutput(self, "MskClusterZookeeper", value=ZN_nodes)
+        CfnOutput(self, "MskClusterNumberOfNodes", value=describe_cluster.get_response_field('ClusterInfo.Provisioned.NumberOfBrokerNodes'))
+        

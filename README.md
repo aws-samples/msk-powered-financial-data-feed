@@ -143,10 +143,10 @@ The above command updates the advertised listeners on the MSK cluster to allow t
 
 The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. These steps will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
 
-1. Go to your deployment instance and add the following environment variable to your .bashrc file.
+1. Go to your deployment instance and add the following environment variable to your .bashrc file. Also, make sure you have the ```CLUSTERARN``` environment variable.
 
     ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE=com.amazonaws.vpce.<region>.vpce-svc-<your-endpoint-service-ID>" >> ~/.bashrc
+    echo "export MSK_VPC_ENDPOINT_SERVICE='com.amazonaws.vpce.<region>.vpce-svc-<your-endpoint-service-ID>'" >> ~/.bashrc
     ```
 
 You can find the name of your VPC endpoint service by clicking on **Endpoint services** in your AWS VPC console, and selecting the service, and looking in the service details section. The name begins with com.amazonaws.

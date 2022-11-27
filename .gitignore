@@ -213,3 +213,4 @@ config-info.json
 *.jks
 msk-config-arn.txt
 
+bin/get_cluster.py
