@@ -1,4 +1,4 @@
-import os.path, json
+import os.path, json, boto3
 from aws_cdk import (
     Stack,
     aws_ec2 as ec2,
@@ -11,14 +11,52 @@ from constructs import Construct
 dirname = os.path.dirname(__file__)
 app_region = os.environ["CDK_DEFAULT_REGION"]
 
+## Function to Write file for client
+def create_client_export_file(TLSBROKERS, PUBLIC_TLSBROKERS):
+    f = open(os.path.expanduser('~')+"/.client_export", "w")
+    f.write("export TLSBROKERS="+TLSBROKERS+"\n")
+    f.write("export PUBLIC_TLSBROKERS="+PUBLIC_TLSBROKERS+"\n")
+    f.close()
+
+    ## OUTPUT
+    print("\nFile '"+str(os.path.expanduser('~'))+"/.client_export' was created.")
+    print("Please share this file with your customer and ask them to add as Environment variables, before deploying client app.\n\n")
+
+## Function to variable
+def get_variables(CLUSTERARN):
+    client = boto3.client('kafka')
+
+    list_response = client.list_nodes(
+        ClusterArn=CLUSTERARN
+    )
+    bootstrap_response = client.get_bootstrap_brokers(
+        ClusterArn=CLUSTERARN
+    )
+
+    ## Create file with all variables needed by client 
+    broker_names = []
+    for broker in list_response.get("NodeInfoList"):
+        broker_names.append(broker.get("BrokerNodeInfo").get("Endpoints")[0])
+
+    TLSBROKERS = str(bootstrap_response.get("BootstrapBrokerStringTls"))
+    PUBLIC_TLSBROKERS = str(bootstrap_response.get("BootstrapBrokerStringPublicTls"))
+    BROKERLIST = json.dumps(broker_names)
+
+    create_client_export_file(TLSBROKERS, PUBLIC_TLSBROKERS)
+
+    return (TLSBROKERS, PUBLIC_TLSBROKERS, BROKERLIST)
+
+
 class ClientSetupStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         # Get list of MSK brokers in cluster from env variable
+        CLUSTERARN = os.environ["CLUSTERARN"]
+        TLSBROKERS, PUBLIC_TLSBROKERS, BROKERLIST = get_variables(CLUSTERARN)
         broker_list=[]
-        broker_list=json.loads(os.environ["BROKERLIST"])
+        broker_list=json.loads(BROKERLIST)
         x = broker_list[0].split(".")
         del x[0]
         domain_name=".".join(x)
@@ -43,7 +81,7 @@ class ClientSetupStack(Stack):
         )
         vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "All brokers")
         i=0
-        while i <= len(broker_list):
+        while i < len(broker_list):
             #print(i)
             vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(int(i+8441)), "Broker "+str(i+1))
             i=i+1
@@ -92,6 +130,9 @@ class ClientSetupStack(Stack):
         user_data_path = os.path.join(dirname, "user-data.sh")
         with open(user_data_path, encoding='utf-8') as f:
             user_data = f.read()
+
+        user_data = user_data+"echo \"export TLSBROKERS='"+str(TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
+        user_data = user_data+"echo \"export PUBLIC_TLSBROKERS='"+str(PUBLIC_TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
 
         # EC2 Instance definition
         instance = ec2.Instance(self, "msk-consumer-instance",

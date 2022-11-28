@@ -77,6 +77,15 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     cdk deploy
     ```
 
+5. For the setup of client application stack you will need the `MskVPCEndpoint` and `CLUSTERARN` in your environment variables.These two variables can be found on the cdk deployment output (step above).
+
+    ```
+    echo "export MSK_VPC_ENDPOINT_SERVICE=<value of DataFeedUsingMskStack.MskVPCEndpoint>" >> ~/.bashrc
+    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
+
+    source ~/.bashrc
+    ```
+
 ### 3. Setting up the provider instance
 
 1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
@@ -153,10 +162,14 @@ The above command updates the advertised listeners on the MSK cluster to allow t
 
 The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. These steps will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
 
-1. Go to your deployment instance and add the following environment variable to your .bashrc file. Also, make sure you have the ```CLUSTERARN``` environment variable.
+1. Go to your **deployment instance** (used in [section 2](#2-deploying-the-msk-cluster)) and make sure you have `CLUSTERARN`, `MSK_VPC_ENDPOINT_SERVICE` and `EC2_KEY_PAIR` on your environment variables. If you don't have these variables, follow the steps below.
 
     ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE='com.amazonaws.vpce.<region>.vpce-svc-<your-endpoint-service-ID>'" >> ~/.bashrc
+    echo "export MSK_VPC_ENDPOINT_SERVICE=<value of DataFeedUsingMskStack.MskVPCEndpoint>" >> ~/.bashrc
+    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
+    echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> ~/.bashrc
+
+    source ~/.bashrc
     ```
 
 You can find the name of your VPC endpoint service by clicking on **Endpoint services** in your AWS VPC console, and selecting the service, and looking in the service details section. The name begins with com.amazonaws.
@@ -169,56 +182,56 @@ You can find the name of your VPC endpoint service by clicking on **Endpoint ser
     cdk deploy
     ```
 
-3. You should now see a new client instance in your EC2 dashboard. Ssh to it and set up the following environment variable in your .bashrc file. 
-
-    ```
-    echo "export TLSBROKERS='Your Bootstrap servers string'" >> ~/.bashrc
-    ```
-
-Run ```source ~/.bashrc``` after updating the value.
-
-
 ### 5. Configuring client instance
 
 The steps below will finish setting up the client instance for private access to the cluster via PrivateLink. The client will need to obtain a signed certificate from the provider.
 
-1. In a separate terminal window, ssh to your client instance and enter the following.
+1. In a separate terminal window, ssh to your **client instance** and enter the following.
 
-    ```
+    ```   
     export PATH=$PATH:$HOME/msk-feed/bin
+    
+    source ~/.bashrc
+
     cd certs
     makecsr
     ```
 
 Enter the organization details for the client when prompted.
 
-2. Copy the ```client_cert.csr``` file to the provider instance, and run the ```issuecert``` command on it to generate the SSL cert for the client application.
+2. Copy the `client_cert.csr` file from the **client instance** to the **provider instance** as `consumer_cert.csr`, and run the `issuecert` command on it to generate the SSL cert for the client application.
 
     ```
-    issuecert client_cert.csr
+    issuecert consumer_cert.csr
     ```
 
 **NOTE:** *In a real-world scenario, the client would upload the CSR file to the provider's Website for signing.*
 
-Copy the generated ```client_cert.pem``` file back to the client instance, and put it in the ```certs``` folder. In your provider instance, you can rename this to consumer_cert.pem and put it in a separate folder.
+3. Copy the generated `consumer_cert.pem` file back to the **client instance** as , and put it in the `certs` folder. Then issue the following command on the **client instance**.
 
-3. On your provider instance, create a test Kafka topic named topic1 using the **kfeed** command.
+    ```
+    importcert consumer_cert.pem
+    ```
+
+4. On the **provider instance**, create a test Kafka topic named topic1 using the `kfeed` command.
 
     ```
     kfeed --create-topic topic1
     ```
 
-The above can be shortened to ```kfeed -c topic1```
+The above can be shortened to `kfeed -c topic1`
 
-4. In the provider instance, add an ACL to allow the producer to write to the topic. 
+4. On the **provider instance**, add an ACL to allow the producer to write to the topic.
 
     ```
     kfeed --allow client_cert.pem producer topic1
     ```
 
-The above can be abbreviated as ```kfeed -a client_cert.pem p topic1``` Note that **client_cert.pem** is the certificate you generated earlier for the producer.
+The above can be abbreviated as ```kfeed -a client_cert.pem p topic1``` 
 
-6. Find the cert that you generated for the consumer, and add an ACL for the consumer application to consume from the topic, as follows.
+**Note:** `**`client_cert.pem` is the certificate you generated earlier for the producer.
+
+6. On the **provider instance** add an ACL for the consumer application to consume from the topic, as follows.
 
     ```
     kfeed --allow consumer_cert.pem consumer topic1

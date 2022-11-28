@@ -36,6 +36,6 @@ cp /home/ec2-user/certs/kafka.client.keystore.jks /home/ec2-user/kafka/kafka.cli
 cp /home/ec2-user/certs/kafka.client.truststore.jks /home/ec2-user/kafka/kafka.client.truststore.jks
 
 # Move files to Kafka folder
-cp /home/ec2-user/certs/client_cert.pem /home/ec2-user/msk-feed/data-feed-examples/client_cert.pem
+cp /home/ec2-user/certs/$pem_file /home/ec2-user/msk-feed/data-feed-examples/client_cert.pem
 cp /home/ec2-user/certs/private_key.pem /home/ec2-user/msk-feed/data-feed-examples/private_key.pem
 cp /home/ec2-user/certs/truststore.pem /home/ec2-user/msk-feed/data-feed-examples/truststore.pem
