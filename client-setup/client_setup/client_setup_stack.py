@@ -57,9 +57,6 @@ class ClientSetupStack(Stack):
         TLSBROKERS, PUBLIC_TLSBROKERS, BROKERLIST = get_variables(CLUSTERARN)
         broker_list=[]
         broker_list=json.loads(BROKERLIST)
-        x = broker_list[0].split(".")
-        del x[0]
-        domain_name=".".join(x)
 
         # Create a client VPC with public subnets for the Kafka consumer
         vpc_cidr = '10.1.0.0/16'
@@ -96,17 +93,15 @@ class ClientSetupStack(Stack):
         )
 
         # Create a Route 53 Private Hosted Zone
-        zone = route53.PrivateHostedZone(self, "hosted-zone", zone_name=domain_name, vpc=vpc)
-
         # Alias the broker names to the NLB name
+        i=1
         for broker in broker_list:
-            x = broker.split(".")
-            route53.ARecord(self, "ARecord_"+str(x[0]),
-                    record_name=x[0],
+            zone = route53.PrivateHostedZone(self, "hosted-zone-"+str(i), zone_name=broker, vpc=vpc)
+            route53.ARecord(self, "ARecord_"+str(broker),
                     zone=zone,
                     target=route53.RecordTarget.from_alias(r53_targets.InterfaceVpcEndpointTarget(msk_vpc_endpoint))
             )
-
+            i=i+1
 
         # Create an EC2 instance in this  VPC to run the Kafka feed consumer app
         # AMI

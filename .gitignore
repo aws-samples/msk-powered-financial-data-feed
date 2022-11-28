@@ -214,3 +214,4 @@ config-info.json
 msk-config-arn.txt
 
 bin/get_cluster.py
+bin/update_cluster.py
