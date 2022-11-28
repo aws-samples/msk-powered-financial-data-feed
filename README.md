@@ -42,7 +42,8 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     ```
     git clone https://github.com/aws-samples/msk-powered-financial-data-feed.git msk-feed
     cd msk-feed
-    export PATH=$PATH:$HOME/msk-feed/bin
+    python3 -m pip install -r requirements.txt    
+    export PATH=-$PATH:$HOME/msk-feed/bin
     ```
 
 2. Add the following shell environment variables to your .bashrc file. Update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page.
