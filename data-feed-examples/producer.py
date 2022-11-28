@@ -32,7 +32,7 @@ for line in sys.stdin:
     msg = {"Sending": line.rstrip()}
 
     # Send message to Kafka Brokers
-    producer.send('topic3', value=msg)
+    producer.send('topic1', value=msg)
     producer.flush()
     sys.stdout.write("> ")
     sys.stdout.flush()

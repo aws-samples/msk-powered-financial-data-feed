@@ -42,7 +42,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     ```
     git clone https://github.com/aws-samples/msk-powered-financial-data-feed.git msk-feed
     cd msk-feed
-    export PATH=-$PATH:$HOME/msk-feed/bin
+    export PATH=$PATH:$HOME/msk-feed/bin
     ```
 
 2. Add the following shell environment variables to your .bashrc file. Update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page.
@@ -76,11 +76,12 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 
     cdk deploy
     ```
+**NOTE:** This step can take up to another 45 minutes.
 
 5. For the setup of client application stack you will need the `MskVPCEndpoint` and `CLUSTERARN` in your environment variables.These two variables can be found on the cdk deployment output (step above).
 
     ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE=<value of DataFeedUsingMskStack.MskVPCEndpoint>" >> ~/.bashrc
+    echo "export MSK_VPC_ENDPOINT_SERVICE='DataFeedUsingMskStack.MskVPCEndpoint value'" >> ~/.bashrc
     echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
 
     source ~/.bashrc
@@ -103,7 +104,8 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 3. Run ```get_nodes.py``` python script to capture Zookeeper and Bootstrap nodes and export then to environment variables. First you will need export a few variables.
 
     ```
-    python3 msk-feed/bin/get_nodes.py
+    python3 -m pip install -r ~/msk-feed/requirements.txt
+    python3 ~/msk-feed/bin/get_nodes.py
     
     source ~/.bashrc 
     ```
@@ -137,11 +139,11 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
    
    * ```client_cert.csr``` - Certificate signing request file
    * ```client_cert.pem``` - Client certificate file
-   * ```private_key.pem``` - Private key for mutual TLS
-   * ```truststore.pem``` - Store of external certificates that are trusted
+   * ```client.properties``` - Properties file that contains Kafka tools client configuration for TLS connection
    * ```kafka.client.keystore.jks``` - Java Key Store file that contains Client certificate, private key and trust chain
    * ```kafka.client.truststore.jks``` - Java Key Store file that contains trusted public CAs
-   * ```client.properties``` - Properties file that contains Kafka tools client configuration for TLS connection
+   * ```private_key.pem``` - Private key for mutual TLS
+   * ```truststore.pem``` - Store of external certificates that are trusted
 
 8. Update the advertised listener ports on the MSK cluster
 
@@ -224,6 +226,7 @@ The above can be shortened to `kfeed -c topic1`
 4. On the **provider instance**, add an ACL to allow the producer to write to the topic.
 
     ```
+    cd ~/certs/
     kfeed --allow client_cert.pem producer topic1
     ```
 
@@ -234,6 +237,7 @@ The above can be abbreviated as ```kfeed -a client_cert.pem p topic1```
 6. On the **provider instance** add an ACL for the consumer application to consume from the topic, as follows.
 
     ```
+    cd ~/certs/
     kfeed --allow consumer_cert.pem consumer topic1
     ```
 
@@ -246,12 +250,14 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 1. In your **client instance**, run the test consumer application.
 
     ```
+    cd ~/msk-feed/data-feed-examples/
     python consumer.py
     ```
 
 2. In your **provider instance**, run the test producer application.
 
     ```
+    cd ~/msk-feed/data-feed-examples/
     python producer.py 
     ```
 
