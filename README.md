@@ -42,6 +42,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
     ```
     git clone https://github.com/aws-samples/msk-powered-financial-data-feed.git msk-feed
     cd msk-feed
+    python3 -m pip install -r requirements.txt
     export PATH=-$PATH:$HOME/msk-feed/bin
     ```
 
