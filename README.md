@@ -165,7 +165,7 @@ The steps below will create a client EC2 instance in a new VPC to run the Kafka 
 1. Go to your **deployment instance** (used in [section 2](#2-deploying-the-msk-cluster)) and make sure you have `CLUSTERARN`, `MSK_VPC_ENDPOINT_SERVICE` and `EC2_KEY_PAIR` on your environment variables. If you don't have these variables, follow the steps below.
 
     ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE=<value of DataFeedUsingMskStack.MskVPCEndpoint>" >> ~/.bashrc
+    echo "export MSK_VPC_ENDPOINT_SERVICE='value of DataFeedUsingMskStack.MskVPCEndpoint'" >> ~/.bashrc
     echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
     echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> ~/.bashrc
 
