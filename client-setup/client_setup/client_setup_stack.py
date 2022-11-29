@@ -129,6 +129,7 @@ class ClientSetupStack(Stack):
 
         user_data = user_data+"echo \"export TLSBROKERS='"+str(TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
         user_data = user_data+"echo \"export PUBLIC_TLSBROKERS='"+str(PUBLIC_TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
+        user_data = user_data+"echo \"export VPCE_TLSBROKERS='"+str(PUBLIC_TLSBROKERS).replace("-public.",".tls.")+"'\" >> /home/ec2-user/.bashrc \n"
 
         # EC2 Instance definition
         instance = ec2.Instance(self, "msk-consumer-instance",
