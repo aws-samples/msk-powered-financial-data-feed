@@ -96,6 +96,7 @@ class ClientSetupStack(Stack):
         # Alias the broker names to the NLB name
         i=1
         for broker in broker_list:
+            broker = str(broker).replace("b-"+str(i)+".","b-"+str(i)+".tls.")
             zone = route53.PrivateHostedZone(self, "hosted-zone-"+str(i), zone_name=broker, vpc=vpc)
             route53.ARecord(self, "ARecord_"+str(broker),
                     zone=zone,
