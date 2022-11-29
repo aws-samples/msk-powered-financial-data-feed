@@ -34,18 +34,26 @@ while i <= number_of_nodes:
     host = str(host).replace("-internal","")
     protocol_map = output.get("listener_security_protocol_map")
     endpoints.append("CLIENT_SECURE_VPCE://"+str(host)+":"+str(init_port))
+    endpoints_str = str(endpoints).replace(" ","").replace("'","")
     protocol_map["CLIENT_SECURE_VPCE"] = "SSL"
+    protocol_map_str = str(protocol_map).replace(" ","").replace("'","").replace("{","[").replace("}","]")
 
     update_listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
-    update_listener_part2 = " --alter --command-config " + properties_file + " --add-config advertised.listeners="+str(endpoints).replace(" ","").replace("'","")
+    update_listener_part2 = " --alter --command-config " + properties_file + " --add-config advertised.listeners="+endpoints_str
 
     update_map_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
-    update_map_part2 = " --alter --command-config " + properties_file + " --add-config listener.security.protocol.map="+str(protocol_map).replace(" ","").replace("'","")
+    update_map_part2 = " --alter --command-config " + properties_file + " --add-config listener.security.protocol.map="+protocol_map_str
+
+    listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
+    listener_part2 = " --alter --command-config " + properties_file + " --add-config listeners="+endpoints_str
 
 
-    print(update_listener_part1+update_listener_part2)
+    print(listener_part1+listener_part2)    
     print("###############")
     print(update_map_part1+update_map_part2)
+    print("###############")
+    print(update_listener_part1+update_listener_part2)
+
     print("\n\n\n")
 
 
