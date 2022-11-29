@@ -33,7 +33,7 @@ while i <= number_of_nodes:
     host = output.get("host")
     host = str(host).replace("-internal","")
     protocol_map = output.get("listener_security_protocol_map")
-    endpoints.append("CLIENT_SECURE_VPCE://"+str(host)+":"+str(init_port))
+    endpoints.append("CLIENT_SECURE_VPCE://"+str(host).replace("b-"+str(i)+".","b-"+str(i)+".tls.")+":"+str(init_port))
     endpoints_str = str(endpoints).replace(" ","").replace("'","")
     protocol_map["CLIENT_SECURE_VPCE"] = "SSL"
     protocol_map_str = str(protocol_map).replace(" ","").replace("'","").replace("{","[").replace("}","]")
@@ -48,15 +48,12 @@ while i <= number_of_nodes:
     listener_part2 = " --alter --command-config " + properties_file + " --add-config listeners="+endpoints_str
 
 
-    print(listener_part1+listener_part2)    
-    print("###############")
     print(update_map_part1+update_map_part2)
     print("###############")
+    print(listener_part1+listener_part2)    
+    print("###############")
     print(update_listener_part1+update_listener_part2)
-
     print("\n\n\n")
-
-
 
     init_port = init_port+1
     i=i+1
