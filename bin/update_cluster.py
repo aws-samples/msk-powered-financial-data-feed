@@ -27,7 +27,7 @@ while i <= number_of_nodes:
     print("###")
     output=json.loads(out.decode('utf-8'))
 
-    print(json.dumps(output, indent=2, default=str))
+    #print(json.dumps(output, indent=2, default=str))
 
     endpoints = output.get("endpoints")
     host = output.get("host")
@@ -36,7 +36,7 @@ while i <= number_of_nodes:
     protocol_map["CLIENT_SECURE_VPCE"] = "SSL"
 
     update_listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
-    update_listener_part2 = " --alter --command-config " + properties_file + " --add-config advertised.listeners=\""+str(endpoints)+"\""
+    update_listener_part2 = " --alter --command-config " + properties_file + " --add-config advertised.listeners="+str(endpoints)
 
     update_map_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
     update_map_part2 = " --alter --command-config " + properties_file + " --add-config listener.security.protocol.map=\""+str(protocol_map)+"\""
