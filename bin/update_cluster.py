@@ -19,15 +19,15 @@ number_of_nodes = int(response.get("ClusterInfo").get("Provisioned").get("Number
 
 i=1
 init_port = 8441
+config_result = []
 while i <= number_of_nodes:
     command = "~/kafka/bin/zookeeper-shell.sh $ZKNODES get /brokers/ids/"+str(i)+" | grep features"
     command_result = subprocess.run(command, capture_output=True, shell=True)
     out = command_result.stdout
-
-    print("###")
     output=json.loads(out.decode('utf-8'))
-
-    print(json.dumps(output, indent=2, default=str))
+    config_result.append(output)
+    # print("###")
+    # print(json.dumps(output, indent=2, default=str))
 
     endpoints = output.get("endpoints")
     host = output.get("host")
@@ -47,14 +47,19 @@ while i <= number_of_nodes:
     listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
     listener_part2 = " --alter --command-config " + properties_file + " --add-config listeners="+endpoints_str
 
+    os.system(update_map_part1+update_map_part2)
+    os.system(listener_part1+listener_part2)
+    os.system(update_listener_part1+update_listener_part2)
 
-    print(update_map_part1+update_map_part2)
-    print("###############")
-    print(listener_part1+listener_part2)    
-    print("###############")
-    print(update_listener_part1+update_listener_part2)
-    print("\n\n\n")
+    # print(update_map_part1+update_map_part2)
+    # print("###############")
+    # print(listener_part1+listener_part2)    
+    # print("###############")
+    # print(update_listener_part1+update_listener_part2)
+    # print("\n\n\n")
 
     init_port = init_port+1
     i=i+1
+
+print(json.dumps(config_result, indent=3, default=str))
 
