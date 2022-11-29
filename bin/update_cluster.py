@@ -26,6 +26,9 @@ while i <= number_of_nodes:
 
     print("###")
     output=json.loads(out.decode('utf-8'))
+
+    print(json.dumps(output, indent=2, default=str))
+
     endpoints = output.get("endpoints")
     host = output.get("host")
     protocol_map = output.get("listener_security_protocol_map")
