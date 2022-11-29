@@ -36,7 +36,7 @@ while i <= number_of_nodes:
     update_listener_part2 = " --alter --command-config " + properties_file + " --add-config advertised.listeners=\""+str(endpoints)+"\""
 
     update_map_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
-    update_map_part2 = " --alter --command-config " + properties_file + " --add-config listener_security_protocol_map=\""+str(protocol_map)+"\""
+    update_map_part2 = " --alter --command-config " + properties_file + " --add-config listener.security.protocol.map=\""+str(protocol_map)+"\""
 
 
     print(update_listener_part1+update_listener_part2)

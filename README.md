@@ -105,6 +105,7 @@ These steps will create a new Kafka provider VPC, and launch the Amazon MSK clus
 3. Run ```get_nodes.py``` python script to capture Zookeeper and Bootstrap nodes and export then to environment variables. First you will need export a few variables.
 
     ```
+    alias python3=python3.8
     python3 -m pip install -r ~/msk-feed/requirements.txt
     python3 ~/msk-feed/bin/get_nodes.py
     
@@ -191,7 +192,8 @@ The steps below will finish setting up the client instance for private access to
 
 1. In a separate terminal window, ssh to your **client instance** and enter the following.
 
-    ```   
+    ```
+    alias python3=python3.8
     export PATH=$PATH:$HOME/msk-feed/bin
     
     source ~/.bashrc
@@ -205,6 +207,7 @@ Enter the organization details for the client when prompted.
 2. Copy the `client_cert.csr` file from the **client instance** to the **provider instance** as `consumer_cert.csr`, and run the `issuecert` command on it to generate the SSL cert for the client application.
 
     ```
+    cd ~/certs
     issuecert consumer_cert.csr
     ```
 
