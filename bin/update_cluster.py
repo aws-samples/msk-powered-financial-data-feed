@@ -26,8 +26,6 @@ while i <= number_of_nodes:
     out = command_result.stdout
     output=json.loads(out.decode('utf-8'))
     config_result.append(output)
-    # print("###")
-    # print(json.dumps(output, indent=2, default=str))
 
     endpoints = output.get("endpoints")
     host = output.get("host")
@@ -51,15 +49,8 @@ while i <= number_of_nodes:
     os.system(listener_part1+listener_part2)
     os.system(update_listener_part1+update_listener_part2)
 
-    # print(update_map_part1+update_map_part2)
-    # print("###############")
-    # print(listener_part1+listener_part2)    
-    # print("###############")
-    # print(update_listener_part1+update_listener_part2)
-    # print("\n\n\n")
-
     init_port = init_port+1
     i=i+1
 
-print(json.dumps(config_result, indent=3, default=str))
+#print(json.dumps(config_result, indent=3, default=str))
 

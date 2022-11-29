@@ -219,7 +219,8 @@ while [ : ]; do
 
         -u|--update-advertised-listeners)
             $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --add --allow-principal "User:*" --cluster
-            python ${SCRIPT_DIR}/update-adv-listeners.py
+#            python ${SCRIPT_DIR}/update-adv-listeners.py
+            python ${SCRIPT_DIR}/update_cluster.py
             $HOME/kafka/bin/kafka-acls.sh --authorizer-properties zookeeper.connect=$ZKNODES --remove --allow-principal "User:*" --cluster
             exit 0
             ;;
