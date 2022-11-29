@@ -153,14 +153,7 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
     kfeed -u
     ```
 
-The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
-
-9. Your provider application will publish data *directly* to the MSK cluster's public endpoint. You will therefore need to change ```TLSBROKERS``` to the **public** endpoint of the cluster. Edit your .bashrc file and update ```TLSBROKERS``` by copying and pasting the public endpoint string (with URLs beginning with b-1-public) from your MSK AWS console.
-
-    ```
-    export TLSBROKERS=<public endpoint of Bootstrap servers>
-    ```
-
+**NOTE:** The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
 
 ### 4. Deploying the Kafka client instance
 
