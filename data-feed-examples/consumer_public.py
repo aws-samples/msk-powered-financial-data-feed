@@ -9,6 +9,7 @@ consumer = KafkaConsumer(
     'topic1', #topic to consume
     group_id='consumer_python', #local consumer name
     bootstrap_servers=tlsbrokers, #Brokers List
+    api_version=(0,11,5),
     # For mTLS auth:
     security_protocol='SSL',
     ssl_check_hostname=True,
