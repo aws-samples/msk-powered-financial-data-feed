@@ -45,6 +45,11 @@ while i <= number_of_nodes:
     listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
     listener_part2 = " --alter --command-config " + properties_file + " --add-config listeners="+endpoints_str
 
+    print(update_map_part1+update_map_part2)
+    print(listener_part1+listener_part2)
+    print(update_listener_part1+update_listener_part2)
+
+
     os.system(update_map_part1+update_map_part2)
     os.system(listener_part1+listener_part2)
     os.system(update_listener_part1+update_listener_part2)

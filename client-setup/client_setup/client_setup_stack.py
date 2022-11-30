@@ -61,9 +61,11 @@ class ClientSetupStack(Stack):
         vpce_initial_port=8440
         for broker in broker_list:
             x=broker.split(".")
-            y=int(x[0].split("-"))
-            port=vpce_initial_port+y
-            broker_list_vpce.append(str(broker)+":"+str(port))
+            y=x[0].split("-")
+            port=vpce_initial_port+int(y[1])
+            broker_list_vpce.append(str(broker).replace(str(x[0])+".",str(x[0])+"-tls.")+":"+str(port))
+
+        print(broker_list_vpce)
 
         # Create a client VPC with public subnets for the Kafka consumer
         vpc_cidr = '10.1.0.0/16'
@@ -105,7 +107,6 @@ class ClientSetupStack(Stack):
         for broker in broker_list:
             x=broker.split(".")
             broker_new = str(broker).replace(str(x[0])+".",str(x[0])+"-tls.")
-            print(broker_new)
             zone = route53.PrivateHostedZone(self, "hosted-zone-"+str(i), zone_name=broker_new, vpc=vpc)
             route53.ARecord(self, "ARecord_"+str(broker),
                     zone=zone,
