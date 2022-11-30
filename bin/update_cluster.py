@@ -18,7 +18,7 @@ response = client.describe_cluster_v2(
 number_of_nodes = int(response.get("ClusterInfo").get("Provisioned").get("NumberOfBrokerNodes"))
 
 i=1
-init_port = 8441
+initial_port = 18000
 config_result = []
 while i <= number_of_nodes:
     command = "~/kafka/bin/zookeeper-shell.sh $ZKNODES get /brokers/ids/"+str(i)+" | grep features"
@@ -31,7 +31,7 @@ while i <= number_of_nodes:
     host = output.get("host")
     host = str(host).replace("-internal","")
     protocol_map = output.get("listener_security_protocol_map")
-    endpoints.append("CLIENT_SECURE_VPCE://"+str(host).replace("b-"+str(i)+".","b-"+str(i)+"-tls.")+":"+str(init_port))
+    endpoints.append("CLIENT_SECURE_VPCE://"+str(host).replace("b-"+str(i)+".","b-"+str(i)+"-tls.")+":"+str(initial_port+i))
     endpoints_str = str(endpoints).replace(" ","").replace("'","")
     protocol_map["CLIENT_SECURE_VPCE"] = "SSL"
     protocol_map_str = str(protocol_map).replace(" ","").replace("'","").replace("{","[").replace("}","]")
@@ -45,16 +45,15 @@ while i <= number_of_nodes:
     listener_part1 = "~/kafka/bin/kafka-configs.sh --bootstrap-server "+str(host)+":9094  --entity-type brokers --entity-name "+str(i)
     listener_part2 = " --alter --command-config " + properties_file + " --add-config listeners="+endpoints_str
 
-    # print(update_map_part1+update_map_part2)
-    # print(listener_part1+listener_part2)
-    # print(update_listener_part1+update_listener_part2)
+    print(update_map_part1+update_map_part2)
+    print(listener_part1+listener_part2)
+    print(update_listener_part1+update_listener_part2)
 
 
-    os.system(update_map_part1+update_map_part2)
-    os.system(listener_part1+listener_part2)
-    os.system(update_listener_part1+update_listener_part2)
+    #os.system(update_map_part1+update_map_part2)
+    #os.system(listener_part1+listener_part2)
+    #os.system(update_listener_part1+update_listener_part2)
 
-    init_port = init_port+1
     i=i+1
 
 #print(json.dumps(config_result, indent=3, default=str))

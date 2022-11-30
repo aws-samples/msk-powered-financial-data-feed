@@ -58,14 +58,15 @@ class ClientSetupStack(Stack):
         broker_list=[]
         broker_list_vpce=[]
         broker_list=json.loads(BROKERLIST)
-        vpce_initial_port=8440
+        vpce_initial_port=18000
         for broker in broker_list:
             x=broker.split(".")
             y=x[0].split("-")
             port=vpce_initial_port+int(y[1])
             broker_list_vpce.append(str(broker).replace(str(x[0])+".",str(x[0])+"-tls.")+":"+str(port))
 
-        print(broker_list_vpce)
+        broker_list_vpce_str = str(broker_list_vpce).replace(" ","").replace("[","").replace("]","").replace("'","")
+        print(broker_list_vpce_str)
 
         # Create a client VPC with public subnets for the Kafka consumer
         vpc_cidr = '10.1.0.0/16'
@@ -88,9 +89,9 @@ class ClientSetupStack(Stack):
         vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(9094), "All brokers")
         i=0
         while i < len(broker_list):
-            #print(i)
-            vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(int(i+8441)), "Broker "+str(i+1))
             i=i+1
+            vpc_endpoint_security_group.add_ingress_rule(ec2.Peer.ipv4(vpc_cidr), ec2.Port.tcp(int(vpce_initial_port+i)), "Broker "+str(i))
+            
        
         # Deploy Interface VPC Endpoint
         vpc_endpoint_service = os.environ["MSK_VPC_ENDPOINT_SERVICE"]
@@ -139,7 +140,7 @@ class ClientSetupStack(Stack):
 
         user_data = user_data+"echo \"export TLSBROKERS='"+str(TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
         user_data = user_data+"echo \"export PUBLIC_TLSBROKERS='"+str(PUBLIC_TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
-        user_data = user_data+"echo \"export VPCE_TLSBROKERS='"+str(broker_list_vpce).replace("-public.",".tls.")+"'\" >> /home/ec2-user/.bashrc \n"
+        user_data = user_data+"echo \"export VPCE_TLSBROKERS='"+str(broker_list_vpce_str)+"'\" >> /home/ec2-user/.bashrc \n"
 
         # EC2 Instance definition
         instance = ec2.Instance(self, "msk-consumer-instance",
