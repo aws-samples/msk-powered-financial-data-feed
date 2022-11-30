@@ -56,7 +56,14 @@ class ClientSetupStack(Stack):
         CLUSTERARN = os.environ["CLUSTERARN"]
         TLSBROKERS, PUBLIC_TLSBROKERS, BROKERLIST = get_variables(CLUSTERARN)
         broker_list=[]
+        broker_list_vpce=[]
         broker_list=json.loads(BROKERLIST)
+        vpce_initial_port=8440
+        for broker in broker_list:
+            x=broker.split(".")
+            y=int(x[0].split("-"))
+            port=vpce_initial_port+y
+            broker_list_vpce.append(str(broker)+":"+str(port))
 
         # Create a client VPC with public subnets for the Kafka consumer
         vpc_cidr = '10.1.0.0/16'
@@ -97,7 +104,7 @@ class ClientSetupStack(Stack):
         i=1
         for broker in broker_list:
             x=broker.split(".")
-            broker_new = str(broker).replace(str(x[0])+".",str(x[0])+".tls.")
+            broker_new = str(broker).replace(str(x[0])+".",str(x[0])+"-tls.")
             print(broker_new)
             zone = route53.PrivateHostedZone(self, "hosted-zone-"+str(i), zone_name=broker_new, vpc=vpc)
             route53.ARecord(self, "ARecord_"+str(broker),
@@ -131,7 +138,7 @@ class ClientSetupStack(Stack):
 
         user_data = user_data+"echo \"export TLSBROKERS='"+str(TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
         user_data = user_data+"echo \"export PUBLIC_TLSBROKERS='"+str(PUBLIC_TLSBROKERS)+"'\" >> /home/ec2-user/.bashrc \n"
-        user_data = user_data+"echo \"export VPCE_TLSBROKERS='"+str(PUBLIC_TLSBROKERS).replace("-public.",".tls.")+"'\" >> /home/ec2-user/.bashrc \n"
+        user_data = user_data+"echo \"export VPCE_TLSBROKERS='"+str(broker_list_vpce).replace("-public.",".tls.")+"'\" >> /home/ec2-user/.bashrc \n"
 
         # EC2 Instance definition
         instance = ec2.Instance(self, "msk-consumer-instance",

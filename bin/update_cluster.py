@@ -31,7 +31,7 @@ while i <= number_of_nodes:
     host = output.get("host")
     host = str(host).replace("-internal","")
     protocol_map = output.get("listener_security_protocol_map")
-    endpoints.append("CLIENT_SECURE_VPCE://"+str(host).replace("b-"+str(i)+".","b-"+str(i)+".tls.")+":"+str(init_port))
+    endpoints.append("CLIENT_SECURE_VPCE://"+str(host).replace("b-"+str(i)+".","b-"+str(i)+"-tls.")+":"+str(init_port))
     endpoints_str = str(endpoints).replace(" ","").replace("'","")
     protocol_map["CLIENT_SECURE_VPCE"] = "SSL"
     protocol_map_str = str(protocol_map).replace(" ","").replace("'","").replace("{","[").replace("}","]")
