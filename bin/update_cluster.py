@@ -18,7 +18,7 @@ response = client.describe_cluster_v2(
 number_of_nodes = int(response.get("ClusterInfo").get("Provisioned").get("NumberOfBrokerNodes"))
 
 i=1
-initial_port = 18000
+initial_port = 8440
 config_result = []
 while i <= number_of_nodes:
     command = "~/kafka/bin/zookeeper-shell.sh $ZKNODES get /brokers/ids/"+str(i)+" | grep features"
