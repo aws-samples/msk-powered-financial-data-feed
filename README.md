@@ -248,14 +248,14 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 
     ```
     cd ~/msk-feed/data-feed-examples/
-    python consumer.py
+    python3 consumer.py
     ```
 
 2. In your **provider instance**, run the test producer application.
 
     ```
     cd ~/msk-feed/data-feed-examples/
-    python producer.py 
+    python3 producer.py 
     ```
 
 #### Testing Alpaca producer and consumer python clients
