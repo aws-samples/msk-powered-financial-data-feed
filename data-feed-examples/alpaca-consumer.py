@@ -18,7 +18,7 @@ consumer = KafkaConsumer(
     ssl_password=os.environ.get('PK_PASSWORD'),
 )
 
-print("Starting Kafka konsumer with brokers at ", tlsbrokers)
+print("Starting Kafka Consumer with brokers at ", tlsbrokers)
 
 # Loop to consume messages and Print details.
 for message in consumer:
