@@ -15,6 +15,7 @@ consumer = KafkaConsumer(
     ssl_certfile='client_cert.pem',
     ssl_keyfile='private_key.pem',
     ssl_cafile='truststore.pem',
+    ssl_password=os.environ.get('PK_PASSWORD'),
 )
 
 print("Starting Kafka konsumer with brokers at ", tlsbrokers)

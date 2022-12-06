@@ -14,6 +14,7 @@ producer = KafkaProducer(
     ssl_certfile='client_cert.pem',
     ssl_keyfile='private_key.pem',
     ssl_cafile='truststore.pem',
+    ssl_password=os.environ.get('PK_PASSWORD'),
     
     value_serializer=lambda v: json.dumps(v).encode('utf-8'), #Serialization Method
     acks=(1) #Number of ACKs to wait on. (0= None, 1=Partition Leader, All= All Brokers with the partion)

@@ -39,3 +39,5 @@ cp /home/ec2-user/certs/kafka.client.truststore.jks /home/ec2-user/kafka/kafka.c
 cp /home/ec2-user/certs/$pem_file /home/ec2-user/msk-feed/data-feed-examples/client_cert.pem
 cp /home/ec2-user/certs/private_key.pem /home/ec2-user/msk-feed/data-feed-examples/private_key.pem
 cp /home/ec2-user/certs/truststore.pem /home/ec2-user/msk-feed/data-feed-examples/truststore.pem
+
+echo "export PK_PASSWORD='$keypass'" >> ~/.bashrc
