@@ -25,13 +25,13 @@ read -s -p "Enter your password for all key files: " keypass
 
 echo -e "\nCreating Keystore files."
 echo -e "\nEnter your Certificate parameters."
-keytool -genkey -alias kafka-key -keystore $keystore_file -storetype pkcs12  -storepass $keypass
+keytool -genkey -alias kafka-key  -keyalg RSA -keystore $keystore_file -storetype pkcs12  -storepass $keypass
 
 echo -e "\nCreating Certificate Sign Request files."
 keytool -keystore $keystore_file -certreq -file raw-client-cert.csr -alias kafka-key -storepass $keypass
 sed 's/NEW //' raw-client-cert.csr > $csr_file
 
-echo -e "\nCreating Private Key file."
+echo -e "\nCreating P12 file."
 keytool -importkeystore -srckeystore $keystore_file -destkeystore client.p12 -srcstoretype jks -deststoretype pkcs12 -deststorepass $keypass -srcstorepass $keypass
 
 echo -e "\nExporting Private Key to pem file."
