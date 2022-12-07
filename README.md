@@ -135,6 +135,8 @@ This uses your ACM Private Certificate Authority to sign the CSR and generate th
 
     ```
     importcert client_cert.pem
+
+    source ~/.bashrc 
     ```
 
 7. You should have in your ```certs``` directory the following files.
@@ -210,6 +212,8 @@ Enter the organization details for the client when prompted.
 
     ```
     importcert consumer_cert.pem
+
+    source ~/.bashrc
     ```
 
 4. On the **provider instance**, create a test Kafka topic named topic1 using the `kfeed` command.
@@ -247,8 +251,13 @@ The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
 1. In your **client instance**, run the test consumer application.
 
     ```
+    # For Public Connectivity over Internet
     cd ~/msk-feed/data-feed-examples/
-    python3 consumer.py
+    python3 consumer_internet.py
+
+    # For Private Connectivity over PrivateLink
+    cd ~/msk-feed/data-feed-examples/
+    python3 consumer_internet.py
     ```
 
 2. In your **provider instance**, run the test producer application.
