@@ -10,6 +10,8 @@ from constructs import Construct
 #SETUP DEPLOYMENT VARIABLES
 dirname = os.path.dirname(__file__)
 app_region = os.environ["CDK_DEFAULT_REGION"]
+vpce_initial_port=8440
+
 
 ## Function to Write file for client
 def create_client_export_file(TLSBROKERS, PUBLIC_TLSBROKERS):
@@ -58,7 +60,6 @@ class ClientSetupStack(Stack):
         broker_list=[]
         broker_list_vpce=[]
         broker_list=json.loads(BROKERLIST)
-        vpce_initial_port=18000
         for broker in broker_list:
             x=broker.split(".")
             y=x[0].split("-")
