@@ -11,7 +11,7 @@ tlsbrokers = os.environ.get('TLSBROKERS')
 #Create Kafka Producer
 producer = KafkaProducer(
     bootstrap_servers=tlsbrokers, #Brokers List
-
+    api_version=(2,8,1),
     # For mTLS auth:
     security_protocol='SSL',
     ssl_check_hostname=True,
