@@ -16,7 +16,9 @@ To deploy this solution, you need to do the following:
 
 •	Install the latest version of AWS CDK globally
 
-`npm install -g aws-cdk@latest`
+```
+npm install -g aws-cdk@latest
+```
 
 ## Infrastructure Automation
  
@@ -37,7 +39,9 @@ AWS CDK is used to develop parameterized scripts for building the necessary infr
  
 1.	On your development machine, clone this repo and install the Python packages.
 
-`git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git`
+```
+git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
+```
 
 2.	Install the necessary libraries
 
@@ -53,8 +57,9 @@ set CDK_DEFAULT_REGION=us-east-1
 ```
 
 4.	Bootstrap the first AWS environment (**Producer AWS Account**)
-
-`cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}`
+```
+cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}
+```
 
 5.	Once bootstrapped, the configuration of the "**CDK Toolkit**" stack will be displayed as follows within the Cloud Formation console.
 
@@ -68,7 +73,9 @@ set CDK_DEFAULT_REGION=us-east-1
 
 Make sure you are in the directory where the app1.py file is located. Then deploy as follows. 
 
-`cdk deploy --all --app "python app1.py" --profile {your_profile_name}`
+```
+cdk deploy --all --app "python app1.py" --profile {your_profile_name}
+```
 
 ![cfn_resources](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d4b88398-32ea-4719-87fc-b5299f041642)
 
@@ -88,9 +95,11 @@ Make sure you are in the directory where the app1.py file is located. Then deplo
  
 This step will enable the SASL/SCRAM client authentication, Cluster configuration and PrivateLink.
 
-Make sure you are in the directory where the app1.py file is located.: *dataFeedMsk\*
+Make sure you are in the directory where the app1.py file is located.
 
-`cdk deploy --all --app "python app1.py" --profile {your_profile_name}`
+```
+cdk deploy --all --app "python app1.py" --profile {your_profile_name}
+```
 
 *NOTE*: This step can take up to 30 minutes.
 
@@ -145,7 +154,9 @@ set CDK_DEFAULT_REGION=us-east-1
 
 2.	Bootstrap the first AWS environment (Consumer AWS Account)
 
-`cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}`
+```
+cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}
+```
 
 Once bootstrapped, the configuration of the "CDK Toolkit" stack will be displayed as follows within the Cloud Formation console.
 
@@ -155,7 +166,9 @@ Once bootstrapped, the configuration of the "CDK Toolkit" stack will be displaye
 
 Make sure you are in the directory where the app2.py file is located.
 
-`cdk deploy --all --app "python app2.py" --profile {your_profile_name}`
+```
+cdk deploy --all --app "python app2.py" --profile {your_profile_name}
+```
 
 ![cross_account_cfn](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/61297eb5-ae09-4b65-a7cc-3662e27b4933)
 
