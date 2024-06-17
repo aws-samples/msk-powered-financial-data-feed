@@ -1,331 +1,163 @@
-## Publish a real-time financial data feed to a Kafka client using Amazon MSK 
+# Publishing real-time financial data feeds using Amazon Managed Streaming for Kafka
 
-This application demonstrates how to publish a real-time financial data feed as a service on AWS. It contains the code for a data provider to send streaming data to its clients via an Amazon MSK cluster. Clients can consume the data using a Kafka client SDK. If the client application is in another AWS account, it can connect to the provider's feed directly through AWS PrivateLink. The client can subscribe to a Kafka topic (e.g., "stock-quotes") to consume the data that is of interest. The client and provider authenticate each other using mutual TLS.
+![image](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/f7f19884-9d49-4f70-8246-8cdb8356380d)
 
-## Best Practices Folder
+## Prerequisites
 
-In the **Best Practices** Folder you will find recommendations on:
+To deploy this solution, you need to do the following: 
+ 
+•	[Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and log in. Then create an IAM user with full admin permissions as described at [Create an Administrator](https://docs.aws.amazon.com/streams/latest/dev/setting-up.html) User. Log out and log back into the AWS console as this IAM admin user.
 
-- MSK Official Best Practices
-- Right Sizing your MSK Cluster
-- What metrics should you monitor
-- Other supporting resources
+**NOTE:** Ensure you have two AWS accounts to proceed with this blog.
 
-## Pre-requisites
+**NOTE**: This entire setup may take up to 1 hour and 30 minutes.
 
-You will need an existing Amazon Linux EC2  instance to deploy the cluster. This deployment instance should have git, jq, Python 3.7, [Kafka Tools 2.6.2 or higher](https://archive.apache.org/dist/kafka/2.6.2/kafka_2.12-2.6.2.tgz) and the AWS CLI **v2** installed. To install AWS CLI v2, see [Installing the latest version of the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) You should run ```aws configure``` to specify the AWS access key and secret access key of an IAM user who has sufficient privileges (e.g., an admin) to create a new VPC, launch an MSK cluster and launch EC2 instances. The cluster will be deployed to your default region using AWS CDK. To install CDK on the deployment instance, see [Getting started with the AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html).
+•	Install the AWS Command Line Interface (AWS CLI) on your local development machine and create a profile for the admin user as described at [Set Up the AWS CLI](https://docs.aws.amazon.com/streams/latest/dev/setup-awscli.html).   
 
-## Deployment steps
+•	Create a Key Pair named “*awsBlog-dev-app-us-east-1*” in both accounts to enable connections for our producer and consumer EC2 instances. If you change the Key Pair's name, ensure you update the “keyPairName” parameter in the *parameters.py* file located at
+“*dataFeedMsk\dataFeedMsk\parameters.py*”.
 
-1. [Creating a Private Certificate Authority](#1-creating-a-private-certificate-authority)
-2. [Deploying the MSK Cluster](#2-deploying-the-msk-cluster)
-3. [Setting up the provider instance](#3-setting-up-the-provider-instance)
-4. [Deploying the Kafka client instance](#4-deploying-the-kafka-client-instance)
-5. [Configuring the client instance setup](#5-configuring-client-instance)
-6. [Running the provider and consumer applications](#6-running-the-provider-and-consumer-applications)
+•	Install the latest version of AWS CDK globally
 
-### 1. Creating a Private Certificate Authority
+*npm install -g aws-cdk@latest*
 
-The Kafka provider and client will authenticate each other using mutual TLS (mTLS), so you  need to use AWS Certificate Manager to create a Private Certificate Authority and root certificate as follows.
+## Infrastructure Automation
+ 
+AWS CDK is used to develop parameterized scripts for building the necessary infrastructure. These scripts include various services required for the infrastructure setup.
+ 
+1.	Amazon VPC and Security Groups
+2.	KMS Keys
+3.	Secrets Manager
+4.	SSM Parameter Stores
+5.	CloudWatch Log Groups
+6.	MSK Cluster
+7.	IAM Roles
+8.	EC2 Instances
+9.	OpenSearch Domain
+10.	Apache Flink Application
 
-1. Log in to your [AWS Certificate Manager](https://console.aws.amazon.com/acm) console and click on **AWS Private CA**.
-2. Click  **Create a Private CA** , select CA type **Root** and fill in your organization details. Leave the other options as default and click **Create CA**.
-3. Once the CA becomes active, select **Actions -> Install CA certificate** on the CA's details page to install the root certificate.
+## Deploying the Infrastructure 
+ 
+1.	On your development machine, clone the repo and install the Python packages.
 
+*git clone {public_repository_url}*
 
-### 2. Deploying the MSK Cluster
+2.	Install the necessary libraries
 
-These steps will create a new Kafka provider VPC, and launch the Amazon MSK cluster there, along with a new EC2 instance to run the provider app. 
+*cd dataFeedMSK*
 
-1. Log in to your deployment EC2 instance using ssh, and clone this repo.
+*pip install –r requirements.txt* [**Run this command in Powershell**]
 
-    ```
-    git clone https://github.com/aws-samples/msk-powered-financial-data-feed.git msk-feed
-    cd msk-feed
-    python3 -m pip install -r requirements.txt    
-    export PATH=$PATH:$HOME/msk-feed/bin
-    ```
+3.	Set the environment variables
 
-2. Add the following shell environment variables to your .bashrc file. Update the above variables with your AWS account number, region you are deploying to, and EC2 keypair name for that region. For the **ACM_PCA_ARN** variable, you can paste in the ARN of your Private CA from the CA details page.
+*set CDK_DEFAULT_ACCOUNT={your_aws_account_id}*
 
-    ```
-    echo "export CDK_DEFAULT_ACCOUNT=123456789012" >> ~/.bashrc
-    echo "export CDK_DEFAULT_REGION="us-east-1" >> ~/.bashrc
-    echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> ~/.bashrc
-    echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
-    echo "export MSK_PUBLIC='FALSE'" >> ~/.bashrc
+*set CDK_DEFAULT_REGION=us-east-1*
 
-    source ~/.bashrc
-    ```
+4.	Bootstrap the first AWS environment (**Producer AWS Account**)
 
-3. Deploy the MSK cluster and other required infrastructure using the following cdk commands. 
+*cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}* [**Run this command in CMD**]	
 
-    ```
-    cd cluster-setup
-    cdk bootstrap
-    cdk synth
-    cdk deploy
-    ```
+5.	Once bootstrapped, the configuration of the "**CDK Toolkit**" stack will be displayed as follows within the Cloud Formation console.
 
-**NOTE:** This step can take up to 45 minutes.
+![cdk_tool_kit](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/5d6d0b40-7c29-4f0d-8af3-1b9fb896f8f3)
 
-4. After the app is deployed you will notice that your MSK Cluster does not have Public connectivity. For security reasons MSK does not allow to create a cluster with public access enabled. To enable public access set the MSK_PUBLIC environment variable to TRUE after the cluster is deployed. And redeploy CDK Stack.
+3.	This step involves creating a VPC and deploying the Amazon MSK cluster within it. Additionally, it sets up an Apache Flink application, establishes an OpenSearch domain, and launches a new EC2 instance to handle the retrieval of raw exchange data.
 
-    ```
-    echo "export MSK_PUBLIC='TRUE'" >> ~/.bashrc
-    source ~/.bashrc
+•	Make sure that the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file are set to False.
 
-    cdk deploy
-    ```
-**NOTE:** This step can take up to another 45 minutes.
+•	Update the mskCrossAccountId parameter in the *parameters.py* file with your AWS cross-account ID.
 
-5. For the setup of client application stack you will need the `MskVPCEndpoint` and `CLUSTERARN` in your environment variables.These two variables can be found on the cdk deployment output (step above).
+Make sure you are in the directory where the app1.py file is located.: *dataFeedMsk\*
 
-    ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE='DataFeedUsingMskStack.MskVPCEndpoint value'" >> ~/.bashrc
-    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
+*cdk deploy --all --app "python app1.py" --profile {your_profile_name}*
 
-    source ~/.bashrc
-    ```
+![cfn_resources](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d4b88398-32ea-4719-87fc-b5299f041642)
 
-### 3. Setting up the provider instance
+![cfn_resources_1](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/35dfe8ab-e0ba-43f9-92f0-f14030b09b59)
 
-1. After the above command finishes, ssh into the newly created provider EC2 instance as **ec2-user**. The name of the instance will end in **msk-provider**. In your home directory there, run the following commands.
+**NOTE**: This step can take up to 45-60 minutes.
 
-    ```
-    echo "export ACM_PCA_ARN='ARN of your ACM Private Hosted CA'" >> ~/.bashrc
-    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
-    source ~/.bashrc
+4. This deployment creates an S3 bucket to store the solution artifacts, which include the Flink application JAR file, Python scripts, and user data for both the producer and consumer.
 
-    export PATH=$PATH:$HOME/msk-feed/bin
-    ```
+![bucket1](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/81459024-5557-4f50-a8e6-8ad0f626715c)
 
-2. Run ```aws configure``` and enter the AWS credentials of a user with admin privileges. Make sure to specify the same region that your MSK cluster got deployed.
+![bucket2](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d4bb6283-0f38-4e06-9779-edd7fbaf084f)
 
-3. Run ```get_nodes.py``` python script to capture Zookeeper and Bootstrap nodes and export then to environment variables. First you will need export a few variables.
+![bucket3](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/de60279e-b60c-4f0a-9ae3-d4b1e04138ec)
 
-    ```
-    alias python3=python3.8
-    python3 -m pip install -r ~/msk-feed/requirements.txt
-    python3 ~/msk-feed/bin/get_nodes.py
-    
-    source ~/.bashrc 
-    ```
+5.	Now, set the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file to True. 
+ 
+This step will enable the SASL/SCRAM client authentication, Cluster configuration and PrivateLink.
 
-**NOTE:**  *You can find the values for your Bootstrap servers string and Zookeeper connections string by clicking on **View client information**  on your MSK cluster details page. ```ZKNODES``` is the **Plaintext** Zookeeper connection string and ```TLSBROKERS``` is the **Private endpoint**.*
+Make sure you are in the directory where the app1.py file is located.: *dataFeedMsk\*
 
-4. In your ```certs``` directory, create a private key and certificate signing request (CSR) file for the MSK broker's certificate.
+*cdk deploy --all --app "python app1.py" --profile {your_profile_name}*
 
-    ```
-    cd ~/certs
-    makecsr
-    ```
+**NOTE**: This step can take up to 30 minutes.
 
-Enter your organization's domain name when asked for first and last name and enter additional organization details when prompted. Then make up a password for the your keystore when prompted. You will now have a CSR file called ```client_cert.csr```.
+![msk_cluster](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d28e34a4-c870-4c0d-bf57-367d0e7581c3)
 
-5. Sign the CSR and issue the certificate by running
+**Note:** Below are the steps to configure the infrastructure in the second account
 
-    ```
-    issuecert client_cert.csr
-    ```
+Before deploying the cross-account stack, we need to modify some parameters in the *parameters.py* file.
 
-This uses your ACM Private Certificate Authority to sign the CSR and generate the certificate file, called ```client_cert.pem```. Make sure you have ```ACM_PCA_ARN``` environment variable set.
+•	Log in to the AWS Management Console and navigate to MSK.
 
-6. Import the certificate into your keystore.
+•	Copy the MSK Cluster ARN and update the “**mskClusterArn**” parameter value in the *parameters.py* file. 
 
-    ```
-    importcert client_cert.pem
+![msk_cluster_2](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/5581dcfe-2039-45ab-9fbf-6b8a2c2317ea)
 
-    source ~/.bashrc 
-    ```
+•	If you haven't changed the name of the MSK cluster, there's no need to update the “**mskClusterName**” parameter. If you have, update it with your own MSK Cluster name.
 
-7. You should have in your ```certs``` directory the following files.
-   
-   * ```client_cert.csr``` - Certificate signing request file
-   * ```client_cert.pem``` - Client certificate file
-   * ```client.properties``` - Properties file that contains Kafka tools client configuration for TLS connection
-   * ```kafka.client.keystore.jks``` - Java Key Store file that contains Client certificate, private key and trust chain
-   * ```kafka.client.truststore.jks``` - Java Key Store file that contains trusted public CAs
-   * ```private_key.pem``` - Private key for mutual TLS
-   * ```truststore.pem``` - Store of external certificates that are trusted
+•	Now navigate to Systems Manager (SSM) Parameter Store.
 
-8. Update the advertised listener ports on the MSK cluster
+•	Copy the value of the “**blogAws-dev-mskConsumerPwd-ssmParamStore**” parameter, and update the “**mskConsumerPwdParamStoreValue**” parameter in the *parameters.py* file.
 
-    ```
-    kfeed -u
-    ```
+•	Then, check the value of the parameter named "**getAzIdsParamStore**" and make a note of these two values.
 
-**NOTE:** The above command updates the advertised listeners on the MSK cluster to allow the private NLB to send a message to a specific broker at a specific port (e.g., port 8441 for broker b-1). If prompted to confirm removing the temporary ACL, type yes.
+•	Switch to your second AWS account (Consumer Account) and go to the Resource Access Manager (RAM) service through the console.
 
-### 4. Deploying the Kafka client instance
+•	In the RAM console, click on "**Resource Access Manager**" at the top left of the page.
 
-The steps below will create a client EC2 instance in a new VPC to run the Kafka consumer application. These steps will also create a VPC endpoint that connects to the MSK cluster via PrivateLink, and a Route 53 Private Hosted Zone that aliases the broker names to the VPC endpoint's DNS name.
+![ram](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/f07d4133-62a6-4755-b6a2-69d68cbee827)
 
-1. Go to your **deployment instance** (used in [section 2](#2-deploying-the-msk-cluster)) and make sure you have `CLUSTERARN`, `MSK_VPC_ENDPOINT_SERVICE` and `EC2_KEY_PAIR` on your environment variables. If you don't have these variables, follow the steps below.
+•	At the bottom right, you will see a table listing AZ Names and AZ IDs.
 
-    ```
-    echo "export MSK_VPC_ENDPOINT_SERVICE='value of DataFeedUsingMskStack.MskVPCEndpoint'" >> ~/.bashrc
-    echo "export CLUSTERARN='ARN of your MSK Cluster'" >> ~/.bashrc
-    echo "export EC2_KEY_PAIR='Your EC2 keypair'" >> ~/.bashrc
+![ram_1](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/16af7e28-6af1-441e-9fbe-43dcc79fbf58)
 
-    source ~/.bashrc
-    ```
+•	Compare the AZ IDs from the SSM parameter store with the AZ IDs in this table.
 
-You can find the name of your VPC endpoint service by clicking on **Endpoint services** in your AWS VPC console, and selecting the service, and looking in the service details section. The name begins with com.amazonaws.
+•	Identify the corresponding AZ Names for the matching AZ IDs.
 
-2. Then create the client infrastructure in a new client VPC by typing the following.
+•	Open the *parameters.py* file and insert these AZ Names into the variables “*crossAccountAz1*” and “*crossAccountAz2*”.
 
-    ```
-    cd ../client-setup
-    cdk synth
-    cdk deploy
-    ```
+![ram_2](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/1bb3b341-b825-4069-b3f0-3b10047a0eae)
 
-### 5. Configuring client instance
+For example, in the SSM Parameter Store, the values are "use1-az4" and "use1-az6". When you switch to the second account's RAM and compare, you find that these values correspond to the AZ names "us-east-1a" and "us-east-1b". You need to update the *parameters.py* file with these AZ names by setting crossAccountAz1 to "us-east-1a" and crossAccountAz2 to "us-east-1b".
 
-The steps below will finish setting up the client instance for private access to the cluster via PrivateLink. The client will need to obtain a signed certificate from the provider.
+Note: Ensure that the Availability Zone IDs for both of your accounts are the same.
 
-1. In a separate terminal window, ssh to your **client instance** and enter the following.
+1.	Now, setup the AWS CLI credentials of your consumer AWS Account Set the environment variables
 
-    ```
-    alias python3=python3.8
-    export PATH=$PATH:$HOME/msk-feed/bin
-    
-    source ~/.bashrc
+*set CDK_DEFAULT_ACCOUNT={your_aws_account_id}*
 
-    cd certs
-    makecsr
-    ```
+*set CDK_DEFAULT_REGION=us-east-1*
 
-Enter the organization details for the client when prompted.
+2.	Bootstrap the first AWS environment (Consumer AWS Account)
 
-2. Copy the `client_cert.csr` file from the **client instance** to the **provider instance** as `consumer_cert.csr`, and run the `issuecert` command on it to generate the SSL cert for the client application.
+*cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}* [**Run this command in CMD**]
 
-    ```
-    cd ~/certs
-    issuecert consumer_cert.csr
-    ```
+Once bootstrapped, the configuration of the "CDK Toolkit" stack will be displayed as follows within the Cloud Formation console.
 
-**NOTE:** *In a real-world scenario, the client would upload the CSR file to the provider's Website for signing.*
+![cross_account_cdk](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/092e0c00-a0e3-48ce-bfdc-9b0f1c929798)
 
-3. Copy the generated `consumer_cert.pem` file back to the **client instance** as , and put it in the `certs` folder. Then issue the following command on the **client instance**.
+3.	In the final iteration, we will deploy the cross-account resources, which include the VPC, Security Groups, IAM Roles, and MSK Cluster VPC Connection.
 
-    ```
-    importcert consumer_cert.pem
+Make sure you are in the directory where the app2.py file is located.: *dataFeedMsk\*
 
-    source ~/.bashrc
-    ```
+*cdk deploy --all --app "python app2.py" --profile {your_profile_name}*
 
-4. On the **provider instance**, create a test Kafka topic named topic1 using the `kfeed` command.
+![cross_account_cfn](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/61297eb5-ae09-4b65-a7cc-3662e27b4933)
 
-    ```
-    kfeed --create-topic topic1
-    ```
-
-The above can be shortened to `kfeed -c topic1`
-
-4. On the **provider instance**, add an ACL to allow the producer to write to the topic.
-
-    ```
-    cd ~/certs/
-    kfeed --allow client_cert.pem producer topic1
-    ```
-
-The above can be abbreviated as ```kfeed -a client_cert.pem p topic1``` 
-
-**Note:** `**`client_cert.pem` is the certificate you generated earlier for the producer.
-
-6. On the **provider instance** add an ACL for the consumer application to consume from the topic, as follows.
-
-    ```
-    cd ~/certs/
-    kfeed --allow consumer_cert.pem consumer topic1
-    ```
-
-The above can be abbreviated as ```kfeed -a consumer_cert.pem c topic1```
-
-### 6. Running the provider and consumer applications
-
-#### Testing sample producer and consumer python clients
-
-1. In your **client instance**, run the test consumer application.
-
-    ```
-    # For Public Connectivity over Internet
-    cd ~/msk-feed/data-feed-examples/
-    python3 consumer_internet.py
-
-    # For Private Connectivity over PrivateLink
-    cd ~/msk-feed/data-feed-examples/
-    python3 consumer_internet.py
-    ```
-
-2. In your **provider instance**, run the test producer application.
-
-    ```
-    cd ~/msk-feed/data-feed-examples/
-    python3 producer.py 
-    ```
-
-#### Testing Alpaca producer and consumer python clients
-
-3. **alpaca-producer.py** is an example of a Kafka producer that ingests data from a market data provider called [Alpaca Markets](https://alpaca.markets/) and feeds the data to your MSK Cluster. Alpaca offers a [free tier](https://alpaca.markets/data) API that is a good example of real world data, since it is live market data. There are a few steps that you need to perform to make it work correctly.
-
-4. Sign up for the Alpaca free tier API.
-
-5. Generate an **API KEY ID** and a **Secret Key**
-
-6. Log in using ssh to the **provider instance**  and export Alpaca credentials to the following environment variables.
-
-    ```
-    export APCA_API_KEY_ID="<API KEY ID>"
-    export APCA_API_SECRET_KEY="<Secret Key>"
-    ```
-
-7. On the **provider instance**, create the following topics.
-
-    ```
-    kfeed -c trade 
-    kfeed -c quote
-    kfeed -c crypto_trade
-    kfeed -l 
-    ```
-
-8. On the **provider instance**, add the necessary ACLs to give the producer and consumer access to the topics.
-
-    ```
-    kfeed -a client_cert.pem p trade
-    kfeed -a client_cert.pem p quote
-    kfeed -a client_cert.pem p crypto_trade
-    kfeed -a consumer_cert.pem c trade
-    kfeed -a consumer_cert.pem c quote
-    kfeed -a consumer_cert.pem c crypto_trade
-    ```
-
-9. On the **provider instance**, run the producer in the ```~/msk-feed/data-feed-examples``` folder.
-
-    ```
-    python3 alpaca-producer.py
-    ```
-
-10. In a separate terminal window, ssh to the **client instance** and run the consumer in the ```data-feed-examples``` folder
-
-    ```
-    python3 alpaca-consumer.py
-    ```
-
-You should see the messages in the screen.
-
-## Contributors
-
-[Diego Soares](https://www.linkedin.com/in/diegogsoares/)
-
-[Rana Dutt](https://www.linkedin.com/in/ranadutt/)
-
-## Security
-
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
-
-## License
-
-This library is licensed under the MIT-0 License. See the LICENSE file.
+![vpc_connection](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/80d9b43b-0966-4a80-b473-3e280689b609)

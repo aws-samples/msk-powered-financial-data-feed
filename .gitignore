@@ -213,3 +213,7 @@ config-info.json
 *.jks
 msk-config-arn.txt
 
+# Java related
+*.jar
+*/pom.xml
+

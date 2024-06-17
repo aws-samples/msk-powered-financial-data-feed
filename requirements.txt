@@ -1,5 +1,6 @@
-alpaca-trade-api>=2.3.0
-aws-cdk-lib==2.47.0
-boto3>=1.26.12
-constructs>=10.0.0
-kafka-python>=2.0.2
+aws-cdk-lib==2.140.0
+constructs>=10.0.0,<11.0.0
+h5py
+typing-extensions
+wheel
+# cdk-assume-role-credential-plugin
