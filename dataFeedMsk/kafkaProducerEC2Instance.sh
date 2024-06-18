@@ -60,10 +60,11 @@ sudo python3 -m virtualenv alpaca-script
 source alpaca-script/bin/activate
 pip install -r <(aws s3 cp s3://${BUCKET_NAME}/dataFeedMskArtifacts/python-scripts/requirement.txt -)
 aws s3 cp s3://${BUCKET_NAME}/dataFeedMskArtifacts/python-scripts/ec2-script-live.py .
-echo 'export API_KEY=PKECLY5H0GVN02PAODUC' >> ~/.bashrc
-echo 'export SECRET_KEY=AFHK20nUtVfmiTfuMTUV51OJe4YaQybUSbAs7o02' >> ~/.bashrc
+echo 'export API_KEY=Your_Alpaca_API_Key' >> ~/.bashrc
+echo 'export SECRET_KEY=Your_Alpaca_Secret_key' >> ~/.bashrc
 echo 'export KAFKA_SASL_MECHANISM=SCRAM-SHA-512' >> ~/.bashrc
 export KAFKA_SASL_USERNAME=${MSK_PRODUCER_USERNAME}
 echo "export KAFKA_SASL_USERNAME=${KAFKA_SASL_USERNAME}" >> ~/.bashrc
 export KAFKA_SASL_PASSWORD=${MSK_PRODUCER_PASSWORD}
 echo "export KAFKA_SASL_PASSWORD=${KAFKA_SASL_PASSWORD}" >> ~/.bashrc
+
