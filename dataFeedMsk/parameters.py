@@ -14,7 +14,7 @@ cidrMaskForSubnets = 24         #IPv4 CIDR Mask for Subnets
 
 ###   EC2 Key Pair Parameters   ###
 
-keyPairName = "my-ec2-keypair"       #EC2 Key pair name
+keyPairName = "ts-iad-keypair"       #EC2 Key pair name
 
 ###   Security Group Parameters   ###
 
@@ -46,7 +46,7 @@ mskTopicName1 = "googl"                     #Name of the first MSK topic
 mskTopicName2 = "tsla"                      #Name of the second MSK topic
 mskTopicName3 = "googlenhanced"             #Name of the third MSK topic
 mskTopicName4 = "teslenhanced"              #Name of the fourth MSK topic
-mskCrossAccountId = "112233445566"          #Cross Account ID for MSK
+mskCrossAccountId = "613322082827"          #Cross Account ID for MSK
 
 ###   MSK Producer EC2 Instance Parameters   ### 
 
@@ -78,14 +78,14 @@ openSearchAvailabilityZoneEnable = True             #Select True to enable deplo
 eventTickerIntervalMinutes = "1"                    #Interval in minutes for event ticker
 
 ###   userInput   ###
-enableSaslScramClientAuth = True     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
+enableSaslScramClientAuth = True       #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
 enableClusterConfig = True             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
 enableClusterPolicy = True             #In the first iteration, disable cluster policy, and in the second iteration, enable it
 
 ###     Cross Account Parameters    ###
 
-mskClusterArn = "arn:aws:kafka:us-east-1:112233445566:cluster/awsblog-dev-app-mskCluster"   #ARN of the MSK cluster
+mskClusterArn = "arn:aws:kafka:us-east-1:613322082827:cluster/awsblog-dev-app-mskCluster/3e6001d7-93fd-4ed7-bf08-c06d3daf85bb-2"   #ARN of the MSK cluster
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
-mskConsumerPwdParamStoreValue = "2lJGl3N5nwTHW3g4LQPQHZoHBx48wzim"      #Password stored in AWS Parameter Store for MSK consumer
+mskConsumerPwdParamStoreValue = "IW9Re7F8zK52aBZabnYqeyHMgw61ge3T"      #Password stored in AWS Parameter Store for MSK consumer
 crossAccountAz1 = "us-east-1c"                                          #Availability Zone 1 for cross-account deployment
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment

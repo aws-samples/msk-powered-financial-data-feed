@@ -8,8 +8,8 @@ from alpaca.data.live import StockDataStream
 log = logging.getLogger(__name__)
 
 #Environment variables 
-API_KEY = os.environ.get('API_KEY')
-SECRET_KEY = os.environ.get('SECRET_KEY')
+API_KEY = os.environ.get('ALPACA_API_KEY')
+SECRET_KEY = os.environ.get('ALPACA_SECRET_KEY')
 BOOTSTRAP_SERVERS = os.environ.get('BOOTSTRAP_SERVERS')
 KAFKA_SASL_MECHANISM = os.environ.get('KAFKA_SASL_MECHANISM')
 KAFKA_SASL_USERNAME = os.environ.get('KAFKA_SASL_USERNAME')

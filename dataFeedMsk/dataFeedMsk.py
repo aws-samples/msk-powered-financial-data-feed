@@ -21,6 +21,8 @@ from aws_cdk import (
 import os
 from pathlib import Path
 from . import parameters
+import configparser
+import json
 
 class dataFeedMsk(Stack):
 
@@ -209,6 +211,14 @@ class dataFeedMsk(Stack):
         tags.of(openSearchSecrets).add("app", parameters.app)
         openSearchMasterPasswordSecretValue = openSearchSecrets.secret_value
         openSearchMasterPassword = openSearchMasterPasswordSecretValue.unsafe_unwrap()
+
+        # Read the values of ALPACA_API_KEY and ALPACA_SECRET_KEY from the alpaca.conf YAML file 
+        alpacaConfig = configparser.ConfigParser()
+        alpaca_conf_file = os.path.join(os.path.dirname(__file__), 'alpaca.conf')
+        alpacaConfig.read(alpaca_conf_file)
+        alpacaApiKey = alpacaConfig.get('alpaca', 'ALPACA_API_KEY')
+        alpacaSecretKey = alpacaConfig.get('alpaca', 'ALPACA_SECRET_KEY')
+        
 
 #############       SSM Parameter Store Configurations      #############
 
@@ -634,6 +644,8 @@ class dataFeedMsk(Stack):
         user_data_script = user_data_script.replace("${MSK_TOPIC_NAME_4}", parameters.mskTopicName4)
         user_data_script = user_data_script.replace("${MSK_CONSUMER_USERNAME}", parameters.mskConsumerUsername)
         user_data_script = user_data_script.replace("${BUCKET_NAME}", s3DestinationBucket.bucket_name)
+        user_data_script = user_data_script.replace("${ALPACA_API_KEY}", alpacaApiKey)
+        user_data_script = user_data_script.replace("${ALPACA_SECRET_KEY}", alpacaSecretKey)
 
         user_data.add_commands(user_data_script)
 

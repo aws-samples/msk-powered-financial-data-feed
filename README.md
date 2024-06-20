@@ -6,13 +6,13 @@
 
 To deploy this solution, you need to do the following: 
  
-•	[Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and log in. Then create an IAM user with full admin permissions as described at [Create an Administrator](https://docs.aws.amazon.com/streams/latest/dev/setting-up.html) User. Log out and log back into the AWS console as this IAM admin user.
+•	[Create an AWS account](https://portal.aws.amazon.com/gp/aws/developer/registration/index.html) if you do not already have one and log in. We’ll call this the producer account. Then create an IAM user with full admin permissions as described at [Create an Administrator](https://docs.aws.amazon.com/streams/latest/dev/setting-up.html) User. Log out and log back into the AWS console as this IAM admin user.
 
-*NOTE:* You will need two AWS accounts - a producer account and a consumer account. This entire setup may take up to 1 hour and 30 minutes.
+•   Create an EC2 key pair named *my-ec2-keypair* in this producer account. If you already have an EC2 key pair, you can skip this step
+
+•	Sign up for a free Basic account at [Alpaca](https://alpaca.markets/data) to get your Alpaca API key and secret key. Alpaca will provide the real time stock quotes for our input data feed. 
 
 •	Install the AWS Command Line Interface (AWS CLI) on your local development machine and create a profile for the admin user as described at [Set Up the AWS CLI](https://docs.aws.amazon.com/streams/latest/dev/setup-awscli.html).   
-
-•	Create an EC2 key pair named *my-ec2-keypair* in both accounts to enable connections for our producer and consumer EC2 instances. If you change the key pair's name, ensure you update the *keyPairName* parameter in the *parameters.py* file located in the *dataFeedMsk* folder.
 
 •	Install the latest version of AWS CDK globally
 
@@ -35,43 +35,40 @@ AWS CDK is used to develop parameterized scripts for building the necessary infr
 9.	OpenSearch Domain
 10.	Apache Flink Application
 
-## Deploying the Infrastructure 
+## Deploying the MSK Cluster 
+These steps will create a new provider VPC and launch the Amazon MSK cluster there. It also deploys the Apache Flink application and launches a new EC2 instance to run the application that fetches the raw stock quotes.
  
 1.	On your development machine, clone this repo and install the Python packages.
 
 ```
 git clone git@github.com:aws-samples/msk-powered-financial-data-feed.git
-```
-
-2.	Install the necessary libraries
-
-```
 cd msk-powered-financial-data-feed
 pip install –r requirements.txt
 ```
 
-3.	Set the below environment variables. Specify your producer AWS account ID below. 
+2.	Set the below environment variables. Specify your producer AWS account ID below. 
 ```
 set CDK_DEFAULT_ACCOUNT={your_aws_account_id}
 set CDK_DEFAULT_REGION=us-east-1
 ```
 
-4.	Bootstrap the first AWS environment (**Producer AWS Account**)
+3.	Run the following commands to create your alpaca.conf file. 
+```
+echo ALPACA_API_KEY=your_api_key >> dataFeedMsk/alpaca.conf
+echo ALPACA_SECRET_KEY=your_secret_key >> dataFeedMsk/alpaca.conf
+```
+Edit the alpaca.conf file and replace *your_api_key* and *your_secret_key* with your Alpaca API key and secret key. 
+
+4.	Bootstrap the environment for the producer account.
 ```
 cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}
 ```
 
-5.	Once bootstrapped, the configuration of the "**CDK Toolkit**" stack will be displayed as follows within the Cloud Formation console.
+5.	Using your editor or IDE, view the parameters.py file in the dataFeedMsk folder. Update the *mskCrossAccountId* parameter with your AWS producer account number.
 
-![cdk_tool_kit](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/5d6d0b40-7c29-4f0d-8af3-1b9fb896f8f3)
+6.  If you have an existing EC2 key pair, update the *keyPairName* parameter with the name of your key pair
 
-3.	This step involves creating a VPC and deploying the Amazon MSK cluster within it. Additionally, it sets up an Apache Flink application, establishes an OpenSearch domain, and launches a new EC2 instance to handle the retrieval of raw exchange data.
-
-•	Make sure that the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file are set to False.
-
-•	Update the mskCrossAccountId parameter in the *parameters.py* file with your AWS producer account ID.
-
-Make sure you are in the directory where the app1.py file is located. Then deploy as follows. 
+7.	Make sure that the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file are set to False. Make sure you are in the directory where the app1.py file is located. Then deploy as follows. 
 
 ```
 cdk deploy --all --app "python app1.py" --profile {your_profile_name}
@@ -83,7 +80,7 @@ cdk deploy --all --app "python app1.py" --profile {your_profile_name}
 
 *NOTE*: This step can take up to 45-60 minutes.
 
-4. This deployment creates an S3 bucket to store the solution artifacts, which include the Flink application JAR file, Python scripts, and user data for both the producer and consumer.
+8. This deployment creates an S3 bucket to store the solution artifacts, which include the Flink application JAR file, Python scripts, and user data for both the producer and consumer.
 
 ![bucket1](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/81459024-5557-4f50-a8e6-8ad0f626715c)
 
