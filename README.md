@@ -88,11 +88,13 @@ cdk deploy --all --app "python app1.py" --profile {your_profile_name}
 
 ![bucket3](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/de60279e-b60c-4f0a-9ae3-d4b1e04138ec)
 
-5.	Now, set the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file to True. 
+## Deploying Multi-VPC Connectivity and SASL / SCRAM
+
+1.	Now, set the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file to True. 
  
 This step will enable the SASL/SCRAM client authentication, Cluster configuration and PrivateLink.
 
-Make sure you are in the directory where the app1.py file is located.
+Make sure you are in the directory where the app1.py file is located. Then deploy as follows. 
 
 ```
 cdk deploy --all --app "python app1.py" --profile {your_profile_name}
@@ -100,41 +102,37 @@ cdk deploy --all --app "python app1.py" --profile {your_profile_name}
 
 *NOTE*: This step can take up to 30 minutes.
 
+2. To check the results, click on your MSK cluster in your AWS console, and click the Properties tab. You should see AWS PrivateLink turned on, and SASL/SCRAM as the authentication type. 
+
 ![msk_cluster](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d28e34a4-c870-4c0d-bf57-367d0e7581c3)
 
-*Note:* Below are the steps to configure the infrastructure in the consumer account.
 
-Before deploying the cross-account stack, we need to modify some parameters in the *parameters.py* file.
+3. Copy the MSK cluster ARN shown at the top. Edit your parameters.py file and paste the ARN as the value for the mskClusterArn parameter.  Save the updated file. 
 
-•	Log in to the AWS Management Console and navigate to MSK.
+## Deploying the Data Feed Consumer
+The steps below will create an EC2 instance in a new consumer account to run the Kafka consumer application. The application will connect to the MSK cluster via PrivateLink and SASL/SCRAM. 
 
-•	Copy the MSK Cluster ARN and update the *mskClusterArn* parameter value in the *parameters.py* file. 
+1.  Navigate to Systems Manager (SSM) [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters) in your producer account. 
 
-![msk_cluster_2](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/5581dcfe-2039-45ab-9fbf-6b8a2c2317ea)
+2.  Copy the value of the *blogAws-dev-mskConsumerPwd-ssmParamStore* parameter, and update the *mskConsumerPwdParamStoreValue* parameter in the *parameters.py* file.
 
-•	If you haven't changed the name of the MSK cluster, there's no need to update the *mskClusterName* parameter. If you have, update it with your own MSK Cluster name.
+3.  Then, check the value of the parameter named *getAzIdsParamStore* and make a note of these two values.
 
-•	Now navigate to Systems Manager (SSM) Parameter Store.
+4.  Create another AWS account for the Kafka consumer if you do not already have one, and log in. Then create an IAM user with full admin permissions as described at Create an Administrator User. Log out and log back in to the AWS console as this IAM admin user. 
 
-•	Copy the value of the *blogAws-dev-mskConsumerPwd-ssmParamStore* parameter, and update the *mskConsumerPwdParamStoreValue* parameter in the *parameters.py* file.
+5. Make sure you are in the same region as the region you used in the producer account. Create a new EC2 key pair named *my-ec2-consumer-keypair* in this consumer account.
 
-•	Then, check the value of the parameter named *getAzIdsParamStore* and make a note of these two values.
-
-•	Switch to your second AWS account (Consumer Account) and go to the Resource Access Manager (RAM) service through the console.
-
-•	In the RAM console, click on *Resource Access Manager* at the top left of the page.
+6. Navigate to this [Resource Access Manager](https://console.aws.amazon.com/ram/home#Home) (RAM) home page in your consumer account AWS console.
 
 ![ram](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/f07d4133-62a6-4755-b6a2-69d68cbee827)
 
-•	At the bottom right, you will see a table listing AZ Names and AZ IDs.
+    At the bottom right, you will see a table listing AZ Names and AZ IDs.
 
 ![ram_1](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/16af7e28-6af1-441e-9fbe-43dcc79fbf58)
 
-•	Compare the AZ IDs from the SSM parameter store with the AZ IDs in this table.
+7.  Compare the AZ IDs from the SSM parameter store with the AZ IDs in this table. Identify the corresponding AZ Names for the matching AZ IDs.
 
-•	Identify the corresponding AZ Names for the matching AZ IDs.
-
-•	Open the *parameters.py* file and insert these AZ Names into the variables *crossAccountAz1* and *crossAccountAz2*.
+8.  Open the *parameters.py* file and insert these AZ Names into the variables *crossAccountAz1* and *crossAccountAz2*.
 
 ![ram_2](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/1bb3b341-b825-4069-b3f0-3b10047a0eae)
 
@@ -142,26 +140,29 @@ For example, in the SSM Parameter Store, the values are "use1-az4" and "use1-az6
 
 Note: Ensure that the Availability Zone IDs for both of your accounts are the same.
 
-1.	Now, set up the AWS CLI credentials of your consumer AWS Account. Set the environment variables
+9.	Set the keyPairName parameter to *my-ec2-consumer-keypair* and save the parameters.py file.
+
+10.	Now, set up the AWS CLI credentials of your consumer AWS Account. Set the environment variables
 
 ```
 set CDK_DEFAULT_ACCOUNT={your_aws_account_id}
 set CDK_DEFAULT_REGION=us-east-1
 ```
 
-2.	Bootstrap the first AWS environment (Consumer AWS Account)
+11.	Bootstrap the consumer account environment. Note that we need to add specific policies to the CDK execution role in this case. 
 
 ```
-cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}
+cdk bootstrap aws://{your_aws_account_id}/{your_aws_region} --cloudformation-execution-policies "arn:aws:iam::aws:policy/AmazonMSKFullAccess,arn:aws:iam::aws:policy/AdministratorAccess"
 ```
 
-Once bootstrapped, the configuration of the "CDK Toolkit" stack will be displayed as follows within the Cloud Formation console.
+12.	We now need to grant the consumer account access to the MSK cluster. In your AWS console, copy the consumer AWS account number to your clipboard. Log out and log back in to your producer AWS account. Find your MSK cluster, click Properties and scroll down to Security settings. Click Edit cluster policy and add the consumer account root to the Principal section as follows. Save the changes. 
 
-![cross_account_cdk](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/092e0c00-a0e3-48ce-bfdc-9b0f1c929798)
-
-3.	In the final iteration, we will deploy the cross-account resources, which include the VPC, Security Groups, IAM Roles, and MSK Cluster VPC Connection.
-
-Make sure you are in the directory where the app2.py file is located.
+```
+"Principal": {
+    "AWS": ["arn:aws:iam::<producer-acct-no>:root", "arn:aws:iam::<consumer-acct-no>:root"]
+},
+```
+13.	Deploy the consumer account infrastructure, including the VPC, consumer EC2 instance, security groups and connectivity to the MSK cluster. 
 
 ```
 cdk deploy --all --app "python app2.py" --profile {your_profile_name}
