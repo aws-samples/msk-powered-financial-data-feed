@@ -54,6 +54,7 @@ set CDK_DEFAULT_REGION=us-east-1
 
 3.	Run the following commands to create your alpaca.conf file. 
 ```
+[alpaca]
 echo ALPACA_API_KEY=your_api_key >> dataFeedMsk/alpaca.conf
 echo ALPACA_SECRET_KEY=your_secret_key >> dataFeedMsk/alpaca.conf
 ```
