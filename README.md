@@ -10,7 +10,7 @@ To deploy this solution, you need to do the following:
 
 •   Create an EC2 key pair named *my-ec2-keypair* in this producer account. If you already have an EC2 key pair, you can skip this step
 
-•	Sign up for a free Basic account at [Alpaca](https://alpaca.markets/data) to get your Alpaca API key and secret key. Alpaca will provide the real time stock quotes for our input data feed. 
+•	Follow the instructions at [ALPACA_README](ALPACA_README.md) to sign up for a free Basic account at [Alpaca](https://alpaca.markets/data). Alpaca will provide the real time stock quotes for our input data feed. 
 
 •	Install the AWS Command Line Interface (AWS CLI) on your local development machine and create a profile for the admin user as described at [Set Up the AWS CLI](https://docs.aws.amazon.com/streams/latest/dev/setup-awscli.html).   
 
@@ -55,6 +55,7 @@ set CDK_DEFAULT_REGION=us-east-1
 3.	Run the following commands to create your alpaca.conf file. 
 ```
 [alpaca]
+echo [alpaca] > dataFeedMsk/alpaca.conf
 echo ALPACA_API_KEY=your_api_key >> dataFeedMsk/alpaca.conf
 echo ALPACA_SECRET_KEY=your_secret_key >> dataFeedMsk/alpaca.conf
 ```
