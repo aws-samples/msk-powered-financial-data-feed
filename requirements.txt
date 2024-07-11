@@ -3,4 +3,3 @@ constructs>=10.0.0,<11.0.0
 h5py
 typing-extensions
 wheel
-# cdk-assume-role-credential-plugin
