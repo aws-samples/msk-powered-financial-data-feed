@@ -87,8 +87,10 @@ enableClusterPolicy = True             #In the first iteration, disable cluster 
 consumerEc2KeyPairName = "ts-iad-keypair"                    #Consumer EC2 Key pair name
 ec2ConsumerRoleName = f'{project}-{env}-{app}-consumerEc2Role'                                              #EC2 Consumer IAM role name
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
+mskClusterArn = "arn:aws:kafka:us-east-1:613322082827:cluster/awsblog-prod-app-mskCluster/f7e06aa2-dd45-4a42-a6dc-2488c4cf5411-2"   #ARN of the MSK cluster
 crossAccountAz1 = "us-east-1c"                                          #Availability Zone 1 for cross-account deployment
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment
+mskConsumerPwdParamStoreValue = "QgpPuw5r7yOv1fiJtMNUE8uk8qBlGR7W"      #Pwd stored in AWS Parameter Store for MSK consumer
 
 import dataFeedMsk.config
 

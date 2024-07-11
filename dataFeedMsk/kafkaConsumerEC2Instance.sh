@@ -2,8 +2,6 @@ sudo su
 sudo yum update -y
 sudo yum -y install java-11
 sudo yum install jq -y
-mskConsumerSecretResponse=$(aws secretsmanager get-secret-value --secret-id ${MSK_CONSUMER_SECRET_ARN} --region ${AWS_REGION})
-MSK_CONSUMER_PASSWORD=$(echo $mskConsumerSecretResponse | jq -r '.SecretString' | jq -r '.password')
 wget https://archive.apache.org/dist/kafka/3.5.1/kafka_2.13-3.5.1.tgz
 tar -xzf kafka_2.13-3.5.1.tgz
 cd kafka_2.13-3.5.1/libs

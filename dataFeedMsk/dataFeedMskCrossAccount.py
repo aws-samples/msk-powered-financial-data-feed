@@ -180,25 +180,7 @@ class dataFeedMskCrossAccount(Stack):
                         resources = [f"arn:aws:s3:::{s3DestinationBucket.bucket_name}",
                                     f"arn:aws:s3:::{s3DestinationBucket.bucket_name}/*"
                         ]
-                    ),
-                    iam.PolicyStatement(
-                        effect = iam.Effect.ALLOW,
-                        actions=[
-                            "secretsmanager:GetSecretValue"
-                        ],
-                        resources = [
-                            parameters.mskConsumerSecretArn
-                        ]
-                    ),
-                    iam.PolicyStatement(
-                        effect = iam.Effect.ALLOW,
-                        actions=[
-                            "kms:Decrypt"
-                        ],
-                        resources = [
-                            parameters.customerManagedKeyArn
-                        ]
-                    )
+                    )        
                 ]
             )
         )
@@ -217,7 +199,7 @@ class dataFeedMskCrossAccount(Stack):
             user_data_script = file.read()
 
         user_data_script = user_data_script.replace("${MSK_CONSUMER_USERNAME}", parameters.mskConsumerUsername)
-        user_data_script = user_data_script.replace("${MSK_CONSUMER_SECRET_ARN}", parameters.mskConsumerSecretArn)
+        user_data_script = user_data_script.replace("${MSK_CONSUMER_PASSWORD}", parameters.mskConsumerPwdParamStoreValue)
         user_data_script = user_data_script.replace("${AWS_REGION}", self.region)
 
         user_data.add_commands(user_data_script)
