@@ -219,3 +219,6 @@ msk-config-arn.txt
 # Alpaca
 */alpaca.conf
 
+# Config 
+*/config.py
+

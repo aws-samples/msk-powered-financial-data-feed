@@ -1,5 +1,5 @@
 project = "awsblog"             #Project name
-env = "dev"                     #Environment name dev,prod,stag
+env = "prod"                     #Environment name dev,prod,stag
 app = "app"                     #App name
 
 ###   VPC Parameters   ###
@@ -14,7 +14,7 @@ cidrMaskForSubnets = 24         #IPv4 CIDR Mask for Subnets
 
 ###   EC2 Key Pair Parameters   ###
 
-keyPairName = "ts-iad-keypair"       #EC2 Key pair name
+producerEc2KeyPairName = "iad-keypair"      #Producer EC2 Key pair name
 
 ###   Security Group Parameters   ###
 
@@ -42,10 +42,10 @@ mskClusterVolumeSize = 100                  #Volume Size of MSK Cluster
 mskScramPropertyEnable = True               #Select True to enable (SASL/SCRAM) property for MSK Cluster otherwise False
 mskEncryptionProducerBroker = "TLS"         #Encryption protocol used for communication between producer and brokers in MSK Cluster
 mskEncryptionInClusterEnable = True         #Select True to enable encryption in MSK Cluster otherwise False
-mskTopicName1 = "googl"                     #Name of the first MSK topic
-mskTopicName2 = "tsla"                      #Name of the second MSK topic
-mskTopicName3 = "googlenhanced"             #Name of the third MSK topic
-mskTopicName4 = "teslenhanced"              #Name of the fourth MSK topic
+mskTopicName1 = "amzn"                      #Name of the first MSK topic
+mskTopicName2 = "nvda"                      #Name of the second MSK topic
+mskTopicName3 = "amznenhanced"              #Name of the third MSK topic
+mskTopicName4 = "nvdaenhanced"              #Name of the fourth MSK topic
 mskCrossAccountId = "613322082827"          #Cross Account ID for MSK
 
 ###   MSK Producer EC2 Instance Parameters   ### 
@@ -78,14 +78,17 @@ openSearchAvailabilityZoneEnable = True             #Select True to enable deplo
 eventTickerIntervalMinutes = "1"                    #Interval in minutes for event ticker
 
 ###   userInput   ###
-enableSaslScramClientAuth = True       #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
+enableSaslScramClientAuth = True     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
 enableClusterConfig = True             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
 enableClusterPolicy = True             #In the first iteration, disable cluster policy, and in the second iteration, enable it
 
 ###     Cross Account Parameters    ###
 
-mskClusterArn = "arn:aws:kafka:us-east-1:613322082827:cluster/awsblog-dev-app-mskCluster/3e6001d7-93fd-4ed7-bf08-c06d3daf85bb-2"   #ARN of the MSK cluster
+consumerEc2KeyPairName = "ts-iad-keypair"                    #Consumer EC2 Key pair name
+ec2ConsumerRoleName = f'{project}-{env}-{app}-consumerEc2Role'                                              #EC2 Consumer IAM role name
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
-mskConsumerPwdParamStoreValue = "IW9Re7F8zK52aBZabnYqeyHMgw61ge3T"      #Password stored in AWS Parameter Store for MSK consumer
 crossAccountAz1 = "us-east-1c"                                          #Availability Zone 1 for cross-account deployment
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment
+
+import dataFeedMsk.config
+

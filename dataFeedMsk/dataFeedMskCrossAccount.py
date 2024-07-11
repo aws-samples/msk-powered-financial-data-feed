@@ -2,15 +2,15 @@ from constructs import Construct
 from aws_cdk import (
     Stack,
     CfnOutput,
+    Aws as AWS,
     RemovalPolicy,
+    aws_s3 as s3,
+    Tags as tags,
     aws_ec2 as ec2,
     aws_iam as iam,
     aws_iam as iam,
     aws_msk as msk,
-    aws_s3 as s3,
-    Tags as tags,
-    aws_s3_deployment as s3deployment,
-    Aws as AWS
+    aws_s3_deployment as s3deployment
 )
 import os
 from . import parameters
@@ -50,7 +50,7 @@ class dataFeedMskCrossAccount(Stack):
 
 #############       EC2 Key Pair Configurations      #############
 
-        keyPair = ec2.KeyPair.from_key_pair_name(self, "ec2KeyPair", parameters.keyPairName)
+        keyPair = ec2.KeyPair.from_key_pair_name(self, "ec2KeyPair", parameters.consumerEc2KeyPairName)
 
 #############       Security Group Configurations      #############
 
@@ -97,10 +97,7 @@ class dataFeedMskCrossAccount(Stack):
             description = "Allow all TCP traffic from sgMskCluster to sgMskCluster"
         )
 
-        consumerEc2Role = iam.Role(self, "consumerEc2Role",
-            role_name = f"{parameters.project}-{parameters.env}-{parameters.app}-consumerEc2Role",
-            assumed_by=iam.ServicePrincipal("ec2.amazonaws.com")
-        )
+        consumerEc2Role = iam.Role.from_role_name(self, "consumerEc2Role", role_name=parameters.ec2ConsumerRoleName)
         tags.of(consumerEc2Role).add("name", f"{parameters.project}-{parameters.env}-{parameters.app}-consumerEc2Role")
         tags.of(consumerEc2Role).add("project", parameters.project)
         tags.of(consumerEc2Role).add("env", parameters.env)
@@ -109,8 +106,6 @@ class dataFeedMskCrossAccount(Stack):
 #############       S3 Bucket Configurations      #############
 #############       Deploying Artifacts from source bucket to destination bucket      #############
 
-        # bucket = s3.Bucket.from_bucket_name(self, "s3BucketAwsBlogArtifacts", parameters.s3BucketName)
-
         s3SourceBucket = s3.Bucket.from_bucket_name(self, "s3SourceBucketArtifacts", parameters.s3BucketName)
  
         s3DestinationBucket = s3.Bucket(self, "s3DestinationBucket",
@@ -118,7 +113,8 @@ class dataFeedMskCrossAccount(Stack):
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             versioned=True,
             encryption=s3.BucketEncryption.S3_MANAGED,
-            removal_policy=RemovalPolicy.RETAIN
+            auto_delete_objects=True,
+            removal_policy=RemovalPolicy.DESTROY
         )
  
         s3ArtifactsDeployment = s3deployment.BucketDeployment(self, 's3ArtifactsDeployment',
@@ -184,13 +180,31 @@ class dataFeedMskCrossAccount(Stack):
                         resources = [f"arn:aws:s3:::{s3DestinationBucket.bucket_name}",
                                     f"arn:aws:s3:::{s3DestinationBucket.bucket_name}/*"
                         ]
+                    ),
+                    iam.PolicyStatement(
+                        effect = iam.Effect.ALLOW,
+                        actions=[
+                            "secretsmanager:GetSecretValue"
+                        ],
+                        resources = [
+                            parameters.mskConsumerSecretArn
+                        ]
+                    ),
+                    iam.PolicyStatement(
+                        effect = iam.Effect.ALLOW,
+                        actions=[
+                            "kms:Decrypt"
+                        ],
+                        resources = [
+                            parameters.customerManagedKeyArn
+                        ]
                     )
                 ]
             )
         )
 
 #############      Consumer EC2 Instance Configurations      #############
-        
+
         user_data = ec2.UserData.for_linux()
 
         user_data.add_s3_download_command(
@@ -203,7 +217,8 @@ class dataFeedMskCrossAccount(Stack):
             user_data_script = file.read()
 
         user_data_script = user_data_script.replace("${MSK_CONSUMER_USERNAME}", parameters.mskConsumerUsername)
-        user_data_script = user_data_script.replace("${MSK_CONSUMER_PASSWORD}", parameters.mskConsumerPwdParamStoreValue)
+        user_data_script = user_data_script.replace("${MSK_CONSUMER_SECRET_ARN}", parameters.mskConsumerSecretArn)
+        user_data_script = user_data_script.replace("${AWS_REGION}", self.region)
 
         user_data.add_commands(user_data_script)
         
@@ -225,33 +240,6 @@ class dataFeedMskCrossAccount(Stack):
         tags.of(kafkaConsumerEC2Instance).add("project", parameters.project)
         tags.of(kafkaConsumerEC2Instance).add("env", parameters.env)
         tags.of(kafkaConsumerEC2Instance).add("app", parameters.app)
-
-        # kafkaConsumerEC2Instance.user_data.add_commands(
-        #     "sudo su",
-        #     "sudo yum update -y",
-        #     "sudo yum -y install java-11",
-        #     "sudo yum install jq -y",
-        #     "wget https://archive.apache.org/dist/kafka/3.5.1/kafka_2.13-3.5.1.tgz",
-        #     "tar -xzf kafka_2.13-3.5.1.tgz",
-        #     "cd kafka_2.13-3.5.1/libs",
-        #     "wget https://github.com/aws/aws-msk-iam-auth/releases/download/v1.1.1/aws-msk-iam-auth-1.1.1-all.jar",
-        #     "cd /home/ec2-user",
-        #     "cat <<EOF > /home/ec2-user/users_jaas.conf",
-        #     "KafkaClient {",
-        #     f"    org.apache.kafka.common.security.scram.ScramLoginModule required",
-        #     f'    username="{parameters.mskCustomerUsername}"',
-        #     f'    password="{parameters.mskCustomerPwdParamStoreValue}";',
-        #     "};",
-        #     "EOF",
-        #     "echo 'export KAFKA_OPTS=-Djava.security.auth.login.config=/home/ec2-user/users_jaas.conf' >> ~/.bashrc",
-        #     "mkdir tmp",
-        #     "cp /usr/lib/jvm/java-11-amazon-corretto.x86_64/lib/security/cacerts /home/ec2-user/tmp/kafka.client.truststore.jks",
-        #     "cat <<EOF > /home/ec2-user/customer_sasl.properties",
-        #     f"security.protocol=SASL_SSL",
-        #     f"sasl.mechanism=SCRAM-SHA-512",
-        #     f"ssl.truststore.location=/home/ec2-user/tmp/kafka.client.truststore.jks",
-        #     "EOF",
-        # )
 
 #############       MSK Cluster VPC Connection      #############
 
