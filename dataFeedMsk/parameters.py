@@ -1,5 +1,5 @@
 project = "awsblog"             #Project name
-env = "prod"                     #Environment name dev,prod,stag
+env = "dev"                     #Environment name dev,prod,stag
 app = "app"                     #App name
 
 ###   VPC Parameters   ###
@@ -14,7 +14,7 @@ cidrMaskForSubnets = 24         #IPv4 CIDR Mask for Subnets
 
 ###   EC2 Key Pair Parameters   ###
 
-producerEc2KeyPairName = "iad-keypair"      #Producer EC2 Key pair name
+producerEc2KeyPairName = "my-ec2-keypair"      #Producer EC2 Key pair name
 
 ###   Security Group Parameters   ###
 
@@ -46,7 +46,7 @@ mskTopicName1 = "amzn"                      #Name of the first MSK topic
 mskTopicName2 = "nvda"                      #Name of the second MSK topic
 mskTopicName3 = "amznenhanced"              #Name of the third MSK topic
 mskTopicName4 = "nvdaenhanced"              #Name of the fourth MSK topic
-mskCrossAccountId = "613322082827"          #Cross Account ID for MSK
+mskCrossAccountId = "112233445566"          #Cross Account ID for MSK
 
 ###   MSK Producer EC2 Instance Parameters   ### 
 
@@ -84,7 +84,7 @@ enableClusterPolicy = True             #In the first iteration, disable cluster 
 
 ###     Cross Account Parameters    ###
 
-consumerEc2KeyPairName = "ts-iad-keypair"                    #Consumer EC2 Key pair name
+consumerEc2KeyPairName = "consumer-keypair"                             #Consumer EC2 Key pair name
 ec2ConsumerRoleName = f'{project}-{env}-{app}-consumerEc2Role'                                              #EC2 Consumer IAM role name
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
 mskClusterArn = "arn:aws:kafka:us-east-1:613322082827:cluster/awsblog-prod-app-mskCluster/f7e06aa2-dd45-4a42-a6dc-2488c4cf5411-2"   #ARN of the MSK cluster
@@ -92,5 +92,4 @@ crossAccountAz1 = "us-east-1c"                                          #Availab
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment
 mskConsumerPwdParamStoreValue = "QgpPuw5r7yOv1fiJtMNUE8uk8qBlGR7W"      #Pwd stored in AWS Parameter Store for MSK consumer
 
-import dataFeedMsk.config
 

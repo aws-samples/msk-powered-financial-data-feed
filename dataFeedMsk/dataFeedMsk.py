@@ -162,23 +162,6 @@ class dataFeedMsk(Stack):
         tags.of(customerManagedKey).add("env", parameters.env)
         tags.of(customerManagedKey).add("app", parameters.app)
 
-        customerManagedKeyPolicy = iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            actions=[
-                "kms:Decrypt",
-                "kms:Encrypt",
-                "kms:GenerateDataKey",
-                "kms:DescribeKey"
-            ],
-            resources=[
-                f"arn:aws:kms:{AWS.REGION}:{AWS.ACCOUNT_ID}:key/*"
-            ],
-            principals=[
-                iam.ArnPrincipal(f"arn:aws:iam::{parameters.mskCrossAccountId}:role/{parameters.ec2ConsumerRoleName}")
-            ]
-        )
-        customerManagedKey.add_to_resource_policy(customerManagedKeyPolicy)
-
 #############       Secrets Manager Configurations      #############
 
         mskProducerSecret = secretsmanager.Secret(self, "mskProducerSecret",

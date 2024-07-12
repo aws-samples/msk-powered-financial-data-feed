@@ -68,7 +68,7 @@ cdk bootstrap aws://{your_aws_account_id}/{your_aws_region}
 
 5.	Using your editor or IDE, view the parameters.py file in the dataFeedMsk folder. Update the *mskCrossAccountId* parameter with your AWS producer account number.
 
-6.  If you have an existing EC2 key pair, update the *keyPairName* parameter with the name of your key pair
+6.  If you have an existing EC2 key pair, update the *producerEc2KeyPairName* parameter with the name of your key pair
 
 7.	Make sure that the *enableSaslScramClientAuth*, *enableClusterConfig*, and *enableClusterPolicy* parameters in the *parameters.py* file are set to False. Make sure you are in the directory where the app1.py file is located. Then deploy as follows. 
 
