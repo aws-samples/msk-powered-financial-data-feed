@@ -196,20 +196,6 @@ class dataFeedMsk(Stack):
         tags.of(mskConsumerSecret).add("app", parameters.app)
         mskConsumerSecretPassword= mskConsumerSecret.secret_value_from_json("password").unsafe_unwrap()
 
-        mskConsumerSecretPolicy = iam.PolicyStatement(
-            effect=iam.Effect.ALLOW,
-            actions=[
-                "secretsmanager:GetSecretValue"
-            ],
-            resources=[
-                f"arn:aws:secretsmanager:{AWS.REGION}:{AWS.ACCOUNT_ID}:secret:AmazonMSK_/-{parameters.project}-{parameters.env}-{parameters.app}-mskConsumerSecret-*"
-            ],
-            principals=[
-                iam.ArnPrincipal(f"arn:aws:iam::{parameters.mskCrossAccountId}:role/{parameters.ec2ConsumerRoleName}")
-            ]
-        )
-        mskConsumerSecret.add_to_resource_policy(mskConsumerSecretPolicy)
-
         openSearchSecrets = secretsmanager.Secret(self, "openSearchSecrets",
             description = "Secrets for OpenSearch",
             secret_name = f"{parameters.project}-{parameters.env}-{parameters.app}-openSearchSecrets",
