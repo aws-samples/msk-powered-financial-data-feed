@@ -1,5 +1,5 @@
 project = "awsblog"             #Project name
-env = "dev"                     #Environment name dev,prod,stag
+env = "prod"                     #Environment name dev,prod,stag
 app = "app"                     #App name
 
 ###   VPC Parameters   ###
@@ -12,10 +12,6 @@ az1 = "us-east-1a"              #Availability Zone ID
 az2 = "us-east-1b"              #Availability Zone ID
 cidrMaskForSubnets = 24         #IPv4 CIDR Mask for Subnets
 
-###   EC2 Key Pair Parameters   ###
-
-producerEc2KeyPairName = "my-ec2-keypair"      #Producer EC2 Key pair name
-
 ###   Security Group Parameters   ###
 
 sgMskClusterInboundPort = 0                 #Inbound Port for MSK Cluster Security Group
@@ -26,7 +22,7 @@ crossAccountVpcCidrRange = "10.20.0.0/16"   #Cross Account IPv4 CIDR range for V
 
 ###   S3 Bucket Parameters   ###
 
-s3BucketName = "awsblog-dev-app-us-east-1-095773313313"     #Name of S3 Bucket for Storing Code and Artifacts
+s3BucketName = "awsblog-dev-app-us-east-1-095773313313"     # Name of S3 Bucket for Storing Code and Artifacts
 
 ###   Secrets Manager Parameters   ###
 
@@ -46,7 +42,7 @@ mskTopicName1 = "amzn"                      #Name of the first MSK topic
 mskTopicName2 = "nvda"                      #Name of the second MSK topic
 mskTopicName3 = "amznenhanced"              #Name of the third MSK topic
 mskTopicName4 = "nvdaenhanced"              #Name of the fourth MSK topic
-mskCrossAccountId = "112233445566"          #Cross Account ID for MSK
+
 
 ###   MSK Producer EC2 Instance Parameters   ### 
 
@@ -80,16 +76,21 @@ eventTickerIntervalMinutes = "1"                    #Interval in minutes for eve
 ###   userInput   ###
 enableSaslScramClientAuth = True     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
 enableClusterConfig = True             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
-enableClusterPolicy = True             #In the first iteration, disable cluster policy, and in the second iteration, enable it
+enableClusterPolicy = True           #In the first iteration, disable cluster policy, and in the second iteration, enable it
 
 ###     Cross Account Parameters    ###
 
-consumerEc2KeyPairName = "consumer-keypair"                             #Consumer EC2 Key pair name
 ec2ConsumerRoleName = f'{project}-{env}-{app}-consumerEc2Role'                                              #EC2 Consumer IAM role name
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
-mskClusterArn = "arn:aws:kafka:us-east-1:613322082827:cluster/awsblog-prod-app-mskCluster/f7e06aa2-dd45-4a42-a6dc-2488c4cf5411-2"   #ARN of the MSK cluster
 crossAccountAz1 = "us-east-1c"                                          #Availability Zone 1 for cross-account deployment
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment
-mskConsumerPwdParamStoreValue = "QgpPuw5r7yOv1fiJtMNUE8uk8qBlGR7W"      #Pwd stored in AWS Parameter Store for MSK consumer
 
+
+# Include private config file in .gitignore to avoid exposing sensitive information
+try:
+    from config import *
+except ImportError:
+    # print error message and exit
+    print("Please create a config.py file with your sensitive configuration values.")
+    exit(1)
 
