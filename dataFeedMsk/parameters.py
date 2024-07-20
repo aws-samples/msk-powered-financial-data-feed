@@ -22,8 +22,7 @@ crossAccountVpcCidrRange = "10.20.0.0/16"   #Cross Account IPv4 CIDR range for V
 
 ###   S3 Bucket Parameters   ###
 
-s3BucketName = "awsblog-dev-app-us-east-1-095773313313"     # Name of S3 Bucket for Storing Code and Artifacts
-
+s3BucketName = "aws-blogs-artifacts-public"     # Name of source S3 Bucket where code artifacts reside
 ###   Secrets Manager Parameters   ###
 
 mskProducerUsername = "netsol"        #Producer username for MSK 
@@ -74,9 +73,9 @@ openSearchAvailabilityZoneEnable = True             #Select True to enable deplo
 eventTickerIntervalMinutes = "1"                    #Interval in minutes for event ticker
 
 ###   userInput   ###
-enableSaslScramClientAuth = True     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
-enableClusterConfig = True             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
-enableClusterPolicy = True           #In the first iteration, disable cluster policy, and in the second iteration, enable it
+enableSaslScramClientAuth = False     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
+enableClusterConfig = False             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
+enableClusterPolicy = False           #In the first iteration, disable cluster policy, and in the second iteration, enable it
 
 ###     Cross Account Parameters    ###
 

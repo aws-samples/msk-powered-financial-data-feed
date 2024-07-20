@@ -48,17 +48,17 @@ pip install –r requirements.txt
 
 2.	Set the below environment variables. Specify your producer AWS account ID below. 
 ```
-set CDK_DEFAULT_ACCOUNT={your_aws_account_id}
-set CDK_DEFAULT_REGION=us-east-1
+export CDK_DEFAULT_ACCOUNT={your_aws_account_id}
+export CDK_DEFAULT_REGION=us-east-1
 ```
 
 3. Run the following commands to create your config.py file 
 ```
 echo "mskCrossAccountId = <Your producer AWS account ID>" > config.py
-echo "producerEc2KeyPairName = " >> config.py
-echo "consumerEc2KeyPairName = " >> config.py
-echo "mskConsumerPwdParamStoreValue = " >> config.py
-echo "mskClusterArn = " >> config.py
+echo "producerEc2KeyPairName = '' " >> config.py
+echo "consumerEc2KeyPairName = '' " >> config.py
+echo "mskConsumerPwdParamStoreValue = '' " >> config.py
+echo "mskClusterArn = '' " >> config.py
 
 ```
 
@@ -155,8 +155,8 @@ Note: Ensure that the Availability Zone IDs for both of your accounts are the sa
 9.	Now, set up the AWS CLI credentials of your consumer AWS Account. Set the environment variables
 
 ```
-set CDK_DEFAULT_ACCOUNT={your_aws_account_id}
-set CDK_DEFAULT_REGION=us-east-1
+export CDK_DEFAULT_ACCOUNT={your_aws_account_id}
+export CDK_DEFAULT_REGION=us-east-1
 ```
 
 10.	Bootstrap the consumer account environment. Note that we need to add specific policies to the CDK execution role in this case. 
