@@ -73,15 +73,15 @@ openSearchAvailabilityZoneEnable = True             #Select True to enable deplo
 eventTickerIntervalMinutes = "1"                    #Interval in minutes for event ticker
 
 ###   userInput   ###
-enableSaslScramClientAuth = False     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
-enableClusterConfig = False             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
-enableClusterPolicy = False           #In the first iteration, disable cluster policy, and in the second iteration, enable it
+enableSaslScramClientAuth = True     #In the first iteration, disable SASL/SCRAM client authentication, and in the second iteration, enable it.
+enableClusterConfig = True             #In the first iteration, disable cluster configuration, and in the second iteration, enable it
+enableClusterPolicy = True           #In the first iteration, disable cluster policy, and in the second iteration, enable it
 
 ###     Cross Account Parameters    ###
 
 ec2ConsumerRoleName = f'{project}-{env}-{app}-consumerEc2Role'                                              #EC2 Consumer IAM role name
 mskClusterName = f'{project}-{env}-{app}-mskCluster'                    #Name of the MSK cluster
-crossAccountAz1 = "us-east-1c"                                          #Availability Zone 1 for cross-account deployment
+crossAccountAz1 = "us-east-1a"                                          #Availability Zone 1 for cross-account deployment
 crossAccountAz2 = "us-east-1d"                                          #Availability Zone 2 for cross-account deployment
 
 

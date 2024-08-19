@@ -54,7 +54,7 @@ export CDK_DEFAULT_REGION=us-east-1
 
 3. Run the following commands to create your config.py file 
 ```
-echo "mskCrossAccountId = <Your producer AWS account ID>" > config.py
+echo "mskCrossAccountId = '<Your producer AWS account ID>'" > config.py
 echo "producerEc2KeyPairName = '' " >> config.py
 echo "consumerEc2KeyPairName = '' " >> config.py
 echo "mskConsumerPwdParamStoreValue = '' " >> config.py
@@ -114,23 +114,23 @@ cdk deploy --all --app "python app1.py" --profile {your_profile_name}
 
 *NOTE*: This step can take up to 30 minutes.
 
-2. To check the results, click on your MSK cluster in your AWS console, and click the Properties tab. You should see AWS PrivateLink turned on, and SASL/SCRAM as the authentication type. 
+2. To check the results, click on your MSK cluster in your AWS console, and click the Properties tab. You should see AWS PrivateLink turned on, and SASL/SCRAM as the authentication type.
 
 ![msk_cluster](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/d28e34a4-c870-4c0d-bf57-367d0e7581c3)
 
 
-3. Copy the MSK cluster ARN shown at the top. Edit your *config.py* file and paste the ARN as the value for the mskClusterArn parameter.  Save the updated file. 
+3. Copy the MSK cluster ARN shown at the top. Edit your *config.py* file and paste the ARN as the value for the mskClusterArn parameter.  Save the updated file.
 
 ## Deploying the Data Feed Consumer
-The steps below will create an EC2 instance in a new consumer account to run the Kafka consumer application. The application will connect to the MSK cluster via PrivateLink and SASL/SCRAM. 
+The steps below will create an EC2 instance in a new consumer account to run the Kafka consumer application. The application will connect to the MSK cluster via PrivateLink and SASL/SCRAM.
 
-1.  Navigate to Systems Manager (SSM) [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters) in your producer account. 
+1.  Navigate to Systems Manager (SSM) [Parameter Store](https://console.aws.amazon.com/systems-manager/parameters) in your producer account.
 
 2.  Copy the value of the *blogAws-dev-mskConsumerPwd-ssmParamStore* parameter, and update the *mskConsumerPwdParamStoreValue* parameter in the *config.py* file.
 
 3.  Then, check the value of the parameter named *getAzIdsParamStore* and make a note of these two values.
 
-4.  Create another AWS account for the Kafka consumer if you do not already have one, and log in. Then create an IAM user with full admin permissions as described at Create an Administrator User. Log out and log back in to the AWS console as this IAM admin user. 
+4.  Create another AWS account for the Kafka consumer if you do not already have one, and log in. Then create an IAM user with full admin permissions as described at [Create an Administrator User](https://docs.aws.amazon.com/streams/latest/dev/setting-up.html#setting-up-iam). Log out and log back in to the AWS console as this IAM admin user. 
 
 5. Make sure you are in the same region as the region you used in the producer account. Create a new EC2 key pair, named e.g.  *my-ec2-consumer-keypair* in this consumer account. Update the value of *consumerEc2KeyPairName* in your config.py file with the name of the key pair you just created. 
 
@@ -175,7 +175,7 @@ cdk bootstrap aws://{your_aws_account_id}/{your_aws_region} --cloudformation-exe
 
 12.	Create the IAM role that needs to be attached to the EC2 consumer instance. 
 ```
-aws iam create-role --role-name awsblog-dev-app-consumerEc2Role --assume-role-policy-document file://dataFeedMsk/ec2ConsumerPolicy.json --profile <your-user-profile>
+aws iam create-role --role-name awsblog-prod-app-consumerEc2Role --assume-role-policy-document file://dataFeedMsk/ec2ConsumerPolicy.json --profile <your-user-profile>
 ```
 
 13.	Deploy the consumer account infrastructure, including the VPC, consumer EC2 instance, security groups and connectivity to the MSK cluster. 

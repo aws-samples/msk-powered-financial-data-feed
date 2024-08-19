@@ -118,7 +118,7 @@ class dataFeedMskCrossAccount(Stack):
         )
  
         s3ArtifactsDeployment = s3deployment.BucketDeployment(self, 's3ArtifactsDeployment',
-            sources=[s3deployment.Source.bucket(s3SourceBucket, 'dataFeedMskArtifacts.zip')],
+            sources=[s3deployment.Source.bucket(s3SourceBucket, 'BDB-3696/dataFeedMskArtifacts.zip')],
             destination_bucket=s3DestinationBucket,
             destination_key_prefix = ''
         )
