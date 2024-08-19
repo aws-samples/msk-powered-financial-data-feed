@@ -19,6 +19,7 @@ aws s3 cp s3://{YOUR-S3-BUCKET-NAME}/python-scripts/ec2-script-live.py .
 
 **Running script on Ec2**
 
-1- Run the following command python3 ec2-script-live.py <arg1> <arg2>......<arg n>
-    example: python3 ec2-script-live.py AMZN NVDA
-
+1. Run the following command python3 ec2-script-live.py <arg1> <arg2>......<arg n>
+```
+python3 ec2-script-live.py AMZN NVDA
+```
