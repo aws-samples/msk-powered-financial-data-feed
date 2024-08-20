@@ -181,7 +181,7 @@ cdk bootstrap aws://{your_aws_account_id}/{your_aws_region} --cloudformation-exe
 
 12.	Create the IAM role that needs to be attached to the EC2 consumer instance. 
 ```
-aws iam create-role --role-name awsblog-prod-app-consumerEc2Role --assume-role-policy-document file://dataFeedMsk/ec2ConsumerPolicy.json --profile <your-user-profile>
+aws iam create-role --role-name awsblog-dev-app-consumerEc2Role --assume-role-policy-document file://dataFeedMsk/ec2ConsumerPolicy.json --profile <your-user-profile>
 ```
 
 13.	Deploy the consumer account infrastructure, including the VPC, consumer EC2 instance, security groups and connectivity to the MSK cluster. 
