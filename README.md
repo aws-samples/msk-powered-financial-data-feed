@@ -2,6 +2,12 @@
 
 ![image](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/f7f19884-9d49-4f70-8246-8cdb8356380d)
 
+## Solution Overview
+
+The code here illustrates taking a raw stock quotes feed, enriching it with a sentiment indicator, and delivering it for consumption by a Kafka client. We use a feed from Alpaca and add an indicator when the stock price moves above or below 5% from the previous business day's closing price.
+
+You will deploy an Apache Flink application that enriches the raw data feed, an MSK cluster that contains the messages streams for both the raw and enriched feeds, and an Amazon OpenSearch database that acts as a persistent data store for querying the data. In a separate account that acts as your customer’s account, you will also deploy an EC2 instance running a Kafka client that consumes the enriched data feed.
+
 ## Prerequisites
 
 To deploy this solution, you need to do the following: 

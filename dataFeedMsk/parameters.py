@@ -1,5 +1,5 @@
 project = "awsblog"             #Project name
-env = "prod"                     #Environment name dev,prod,stag
+env = "dev"                     #Environment name dev,prod,stag
 app = "app"                     #App name
 
 ###   VPC Parameters   ###
