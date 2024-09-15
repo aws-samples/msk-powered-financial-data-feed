@@ -168,7 +168,7 @@ export CDK_DEFAULT_REGION=us-east-1
 10.	Bootstrap the consumer account environment. Note that we need to add specific policies to the CDK execution role in this case. 
 
 ```
-cdk bootstrap aws://{your_aws_account_id}/{your_aws_region} --cloudformation-execution-policies "arn:aws:iam::aws:policy/AmazonMSKFullAccess,arn:aws:iam::aws:policy/AdministratorAccess"
+cdk bootstrap aws://{your_aws_account_id}/{your_aws_region} --cloudformation-execution-policies "arn:aws:iam::aws:policy/AmazonMSKFullAccess,arn:aws:iam::aws:policy/AdministratorAccess" –-profile <your-user-profile>
 ```
 
 11.	We now need to grant the consumer account access to the MSK cluster. In your AWS console, copy the consumer AWS account number to your clipboard. Log out and log back in to your producer AWS account. Find your MSK cluster, click Properties and scroll down to Security settings. Click Edit cluster policy and add the consumer account root to the Principal section as follows. Save the changes. 
@@ -193,3 +193,68 @@ cdk deploy --all --app "python app2.py" --profile {your_profile_name}
 ![cross_account_cfn](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/61297eb5-ae09-4b65-a7cc-3662e27b4933)
 
 ![vpc_connection](https://github.com/uzairmansoor/dataFeed-MSK-cdk/assets/82077348/80d9b43b-0966-4a80-b473-3e280689b609)
+
+## Run the applications and view the data
+
+Now that we have the infrastructure up, we can produce a raw stock quotes feed from the producer EC2 instance to the MSK cluster, enrich it using the Apache Flink application, and consume the enriched feed from the consumer application through PrivateLink
+
+## Run the Managed Flink application
+
+1.	In your producer account, open the Amazon Managed Service for Apache Flink console and navigate to your application.
+
+2. 	To run the application, choose **Run**, select **Run with latest snapshot**, and choose **Run**.
+
+3.	When the application changes to the **Running** state, choose **Open Apache Flink dashboard**.  You should see your application under Running Jobs.
+
+### Run the Kafka producer application
+
+1.	On the Amazon EC2 console, locate the IP address of the producer EC2 instance named _awsblog-dev-app-kafkaProducerEC2Instance_. 
+
+2.	Connect to the instance using SSH and run the following commands at a time that the US Nasdaq stock market is open:
+
+```
+sudo su
+cd environment
+source alpaca-script/bin/activate
+python3 ec2-script-live.py AMZN NVDA
+```
+
+### View the enriched data feed in OpenSearch Dashboards
+
+1.	To find the master user name for OpenSearch, open the parameters.py file and locate the value assigned to the _openSearchMasterUsername_ parameter. 
+
+2.	Open Secrets Manager and click on _awsblog-dev-app-openSearchSecrets_ secret to retrieve the password for OpenSearch. 
+
+3.	Navigate to your OpenSearch console and find the URL to your OpenSearch dashboard by clicking on the domain name for your OpenSearch cluster. Click on the URL and sign in using your master user name and password.
+
+4.	In the OpenSearch navigation bar on the left, select **Dashboards Management** under the Management section.
+
+5.	Choose **Index patterns**, then choose **Create index pattern**.
+
+6.	Enter amzn* in the Index pattern name field to match the AMZN ticker, then choose **Next step**.
+
+7.	Select timestamp under the Time field and choose **Create index pattern**. 
+
+8.	Choose **Discover** in the OpenSearch Dashboards navigation pane. 
+
+9.	With **amzn** selected on the index pattern dropdown, select the fields to view the enriched quotes data. The indicator field has been added to the raw data by Amazon Managed Service for Apache Flink to indicate whether the current price direction is neutral, bullish, or bearish.
+
+### Run the Kafka consumer application
+
+To run the consumer application to consume the data feed, you first need to get the multi-VPC brokers URL for the MSK cluster in the producer account. 
+
+1.	On the Amazon MSK console, navigate to your MSK cluster and choose **View client information.** 
+
+2.	Copy the value of the Private endpoint (multi-VPC). 
+
+3.	SSH to your consumer EC2 instance and run the following commands:
+
+```
+sudo su
+alias kafka-consumer=/kafka_2.13-3.5.1/bin/kafka-console-consumer.sh
+kafka-consumer --bootstrap-server {$MULTI_VPC_BROKER_URL} --topic amznenhanced --from-beginning --consumer.config ./customer_sasl.properties
+
+```
+
+You should then see lines of output for the enriched data feed.
+ 
