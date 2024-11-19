@@ -17,7 +17,7 @@
         <flink.version>1.15.1</flink.version>
         <flink.opensearch.version>1.1.0-1.18</flink.opensearch.version>
         <flink.kafka.version>3.1.0-1.18</flink.kafka.version>
-        <kafka.version>3.5.1</kafka.version>
+        <kafka.version>3.7.1</kafka.version>
         <kda.runtime.version>1.2.0</kda.runtime.version>
         <log4j.version>2.23.1</log4j.version>
     </properties>
